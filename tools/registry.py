@@ -388,7 +388,7 @@ _WRITE_TOOLS: list[dict[str, Any]] = [
 
 # ── Dispatch table ─────────────────────────────────────────────────────────────
 #
-# Maps tool name (string from LLM response) → Python callable.
+# Maps tool name (string from LLM response) -> Python callable.
 # Every tool in _READ_TOOLS and _WRITE_TOOLS must have an entry here.
 # ──────────────────────────────────────────────────────────────────────────────
 
@@ -408,9 +408,7 @@ _TOOL_FUNCTIONS: dict[str, Any] = {
 }
 
 
-# ── Public API ─────────────────────────────────────────────────────────────────
-
-
+# Public API
 def query_registry() -> list[dict[str, Any]]:
     """
     Tool schemas for the query agent — read-only tools only.
@@ -459,7 +457,7 @@ def execute(name: str, arguments: dict[str, Any]) -> str:
     except TypeError as e:
         # Wrong arguments — tell the LLM what it got wrong
         log.warning("execute: bad arguments for '%s': %s", name, e)
-        
+
         return (
             f"ERROR: Invalid arguments for tool '{name}': {e}. "
             f"Check the tool schema and try again."
