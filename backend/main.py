@@ -5,7 +5,7 @@ FastAPI application entry point.
 Registers all HTTP routes and the WebSocket endpoint.
 
 Run locally (from project root):
-    uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
+    uvicorn backend.main:app --reload --reload-dir backend --host 0.0.0.0 --port 8000
 
 Run via Docker:
     docker compose up
@@ -86,6 +86,16 @@ app.include_router(sources.router)
 # WebSocket endpoint — used by both UIs for streaming
 @app.websocket("/ws")
 async def ws_endpoint(ws: WebSocket) -> None:
+    await websocket.websocket_handler(ws)
+
+
+@app.websocket("/ws/maintenance")
+async def ws_maintenance(ws: WebSocket) -> None:
+    await websocket.websocket_handler(ws)
+
+
+@app.websocket("/ws/query")
+async def ws_query(ws: WebSocket) -> None:
     await websocket.websocket_handler(ws)
 
 

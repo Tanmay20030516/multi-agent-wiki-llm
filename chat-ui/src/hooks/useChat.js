@@ -15,26 +15,26 @@ export function useChat() {
   useEffect(() => {
     if (!lastEvent) return
 
-    const { type, payload } = lastEvent
+    const { type, content, tool_name } = lastEvent
 
-    if (type === 'token') {
-      // Append token to the current streaming message
+    if (type === 'llm_response') {
       setMessages((prev) =>
         prev.map((m) =>
           m.id === streamingRef.current
-            ? { ...m, content: m.content + payload }
+            ? { ...m, content: m.content + content }
             : m
         )
       )
-    } else if (type === 'progress') {
-      // Agent step update — shown as a subtle status line
+    } else if (type === 'tool_call') {
       setMessages((prev) =>
         prev.map((m) =>
           m.id === streamingRef.current
-            ? { ...m, progress: payload }
+            ? { ...m, progress: `Reading ${tool_name}…` }
             : m
         )
       )
+    } else if (type === 'tool_result') {
+      // tool result received, agent will continue
     } else if (type === 'done') {
       setLoading(false)
       streamingRef.current = null
@@ -42,7 +42,7 @@ export function useChat() {
       setMessages((prev) =>
         prev.map((m) =>
           m.id === streamingRef.current
-            ? { ...m, content: `Error: ${payload}`, isError: true }
+            ? { ...m, content: `Error: ${content}`, isError: true }
             : m
         )
       )
@@ -69,7 +69,7 @@ export function useChat() {
     streamingRef.current = assistantMsg.id
     setLoading(true)
 
-    send({ question })
+    send({ type: 'query', question })
   }
 
   return { messages, loading, connected, sendMessage }

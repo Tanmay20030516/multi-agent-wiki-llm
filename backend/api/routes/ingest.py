@@ -133,6 +133,38 @@ async def ingest_confirm(req: IngestConfirmRequest) -> IngestResultResponse:
     )
 
 
+class IngestTextRequest(BaseModel):
+    text: str = Field(..., description="Full source text")
+    filename: str = Field(default="pasted-note.md", description="Filename for the source")
+
+
+@router.post("/ingest/text")
+async def ingest_text(req: IngestTextRequest) -> dict:
+    """
+    Save pasted text as a raw source file and return its path.
+    Call POST /api/ingest or use WebSocket to start processing.
+    """
+    safe_name = req.filename.replace("/", "-").replace("..", "")
+    if not safe_name:
+        safe_name = "pasted-note.md"
+    if not safe_name.endswith((".md", ".txt")):
+        safe_name += ".md"
+
+    dest_dir = wm.raw_root / "notes"
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    dest_path = dest_dir / safe_name
+    dest_path.write_text(req.text, encoding="utf-8")
+
+    relative_path = f"notes/{safe_name}"
+    log.info("Saved pasted text: %s (%d chars)", relative_path, len(req.text))
+
+    return {
+        "path": relative_path,
+        "size": len(req.text),
+        "message": f"Saved to raw/{relative_path}. Call POST /api/ingest to process.",
+    }
+
+
 @router.post("/ingest/upload")
 async def ingest_upload(
     file: UploadFile = File(...),
@@ -162,8 +194,23 @@ async def ingest_upload(
     relative_path = f"{category}/{file.filename}"
     log.info("Uploaded source: %s", relative_path)
 
+    # Auto-extract text for PDFs so read_source() can serve them to the agent
+    extracted_pages = 0
+    if dest_path.suffix.lower() == ".pdf":
+        txt_path = dest_path.with_suffix(".txt")
+        try:
+            from pypdf import PdfReader
+            reader = PdfReader(str(dest_path))
+            pages = [page.extract_text() or "" for page in reader.pages]
+            txt_path.write_text("\n\n".join(pages), encoding="utf-8")
+            extracted_pages = len(pages)
+            log.info("Extracted %d pages from %s → %s", extracted_pages, dest_path.name, txt_path.name)
+        except Exception as e:
+            log.warning("PDF text extraction failed for %s: %s", dest_path.name, e)
+
     return {
         "path": relative_path,
         "size": dest_path.stat().st_size,
+        "extracted_pages": extracted_pages,
         "message": f"Uploaded to raw/{relative_path}. Call POST /api/ingest to process.",
     }

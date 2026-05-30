@@ -6,7 +6,7 @@ import { useIngest } from '../hooks/useIngest'
 import ProgressStream from './ProgressStream'
 
 export default function IngestPanel() {
-  const { status, events, error, ingestFile, ingestPastedText, reset } = useIngest()
+  const { status, events, error, ingestFile, ingestPastedText, confirm, reject, reset } = useIngest()
   const [pasteMode, setPasteMode] = useState(false)
   const [pastedText, setPastedText] = useState('')
   const [filename, setFilename] = useState('')
@@ -27,7 +27,7 @@ export default function IngestPanel() {
     ingestPastedText(pastedText, filename || 'pasted-note.md')
   }
 
-  const busy = status === 'uploading' || status === 'ingesting'
+  const busy = status === 'uploading' || status === 'ingesting' || status === 'executing'
 
   return (
     <div className="space-y-6">
@@ -118,6 +118,35 @@ export default function IngestPanel() {
         <p className="text-sm text-red-500">Error: {error}</p>
       )}
       <ProgressStream events={events} status={status} />
+
+      {/* Confirmation prompt — agent has presented its plan and is waiting */}
+      {status === 'awaiting' && (
+        <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4 space-y-3">
+          <p className="text-sm font-medium text-indigo-800">
+            Agent is waiting for your approval to write the pages above.
+          </p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => confirm('yes')}
+              className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700
+                         text-white text-sm font-medium transition-colors"
+            >
+              ✓ Approve &amp; write
+            </button>
+            <button
+              onClick={reject}
+              className="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200
+                         text-slate-600 text-sm font-medium transition-colors"
+            >
+              ✗ Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {status === 'executing' && (
+        <p className="text-sm text-indigo-600 animate-pulse">Writing pages to wiki…</p>
+      )}
 
       {status === 'done' && (
         <button

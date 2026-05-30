@@ -53,7 +53,7 @@ class Settings(BaseSettings):
 
     # Model Names
     maintenance_model: str = Field(
-        default="gemini-2.5-flash-preview-05-20",
+        default="gemini-2.5-flash",
         description="Model used by the maintenance agent (ingest, lint, promote)",
     )
     query_model: str = Field(

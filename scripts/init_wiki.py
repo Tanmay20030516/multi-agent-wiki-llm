@@ -17,7 +17,6 @@ Or from the project root:
 
 import sys
 import os
-import subprocess
 import shutil
 from pathlib import Path
 from datetime import date
@@ -95,25 +94,6 @@ def main() -> None:
         print("✓ log.md created")
     else:
         print("  log.md already exists — skipping")
-
-    # Initialise git repo in data/
-    git_dir = settings.data_path / ".git"
-    if not git_dir.exists():
-        result = subprocess.run(
-            ["git", "init", str(settings.data_path)],
-            capture_output=True,
-            text=True,
-        )
-        if result.returncode == 0:
-            # Write .gitignore for raw/ (sources can be large)
-            gitignore = settings.data_path / ".gitignore"
-            gitignore.write_text("raw/\n", encoding="utf-8")
-            print("✓ Git repo initialised at {settings.data_path}")
-            print("  raw/ is gitignored (sources are not versioned)")
-        else:
-            print(f"  Git init skipped: {result.stderr.strip()}")
-    else:
-        print("  Git repo already exists — skipping")
 
     # Final check
     print()

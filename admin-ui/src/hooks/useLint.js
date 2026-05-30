@@ -17,15 +17,17 @@ export function useLint() {
     if (!lastEvent) return
     const { type, payload } = lastEvent
 
-    if (type === 'progress') {
-      setEvents((prev) => [...prev, payload])
-    } else if (type === 'done') {
+    if (type === 'tool_call' || type === 'tool_result') {
+      setEvents((prev) => [...prev, lastEvent.content || lastEvent.tool_name])
+    } else if (type === 'llm_response') {
+      setEvents((prev) => [...prev, lastEvent.content])
+    } else if (type === 'awaiting_input' || type === 'done') {
       setStatus('done')
-      // payload may carry the report JSON
-      if (payload?.issues) setReport(payload)
+      const data = lastEvent.content
+      if (data?.issues) setReport(data)
     } else if (type === 'error') {
       setStatus('error')
-      setError(payload)
+      setError(lastEvent.content)
     }
   }, [lastEvent])
 

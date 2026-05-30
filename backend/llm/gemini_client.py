@@ -159,7 +159,7 @@ class GeminiClient:
                 contents.append(
                     types.Content(
                         role="user",
-                        parts=[types.Part.from_text(msg.get("content", ""))],
+                        parts=[types.Part.from_text(text=msg.get("content", ""))],
                     )
                 )
                 i += 1
@@ -203,7 +203,7 @@ class GeminiClient:
 
         text = msg.get("content", "")
         if text:
-            parts.append(types.Part.from_text(text))
+            parts.append(types.Part.from_text(text=text))
 
         for tc in msg.get("tool_calls", []):
             fn = tc.get("function", {})
@@ -223,7 +223,7 @@ class GeminiClient:
                 )
             )
 
-        return types.Content(role="model", parts=parts or [types.Part.from_text("")])
+        return types.Content(role="model", parts=parts or [types.Part.from_text(text="")])
 
     def _find_tool_name(
         self, messages: list[dict[str, Any]], tool_msg_index: int
