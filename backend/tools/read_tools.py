@@ -27,8 +27,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from core.logger import get_logger
-from core.wiki_manager import wm, PAGE_TYPE_DIRS
+from backend.core.logger import get_logger
+from backend.core.wiki_manager import wm, PAGE_TYPE_DIRS
 
 log = get_logger(__name__)
 

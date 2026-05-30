@@ -24,7 +24,7 @@ import re
 from pathlib import Path
 from typing import Literal
 
-from core.config import settings
+from backend.core.config import settings
 
 
 # Types

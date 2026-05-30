@@ -25,8 +25,8 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from core.logger import get_logger
-from core.wiki_manager import wm
+from backend.core.logger import get_logger
+from backend.core.wiki_manager import wm
 
 log = get_logger(__name__)
 
@@ -148,7 +148,7 @@ def search_wiki(
 # Internals
 def _get_pages_to_search(page_type: str | None) -> list[Path]:
     """Return the list of wiki .md files to search."""
-    from core.wiki_manager import PAGE_TYPE_DIRS
+    from backend.core.wiki_manager import PAGE_TYPE_DIRS
 
     if page_type is not None:
         if page_type not in PAGE_TYPE_DIRS:

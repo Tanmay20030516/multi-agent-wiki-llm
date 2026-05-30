@@ -11,10 +11,10 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Literal
 
-from core.logger import get_logger
-from llm.base_client import LLMClient
-from llm.gemini_client import GeminiClient
-from llm.groq_client import GroqClient
+from backend.core.logger import get_logger
+from backend.llm.base_client import LLMClient
+from backend.llm.gemini_client import GeminiClient
+from backend.llm.groq_client import GroqClient
 
 log = get_logger(__name__)
 

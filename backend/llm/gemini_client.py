@@ -26,9 +26,9 @@ from typing import Any
 from google import genai
 from google.genai import types
 
-from core.config import settings
-from core.logger import get_logger
-from llm.base_client import LLMResponse, ToolCall
+from backend.core.config import settings
+from backend.core.logger import get_logger
+from backend.llm.base_client import LLMResponse, ToolCall
 
 log = get_logger(__name__)
 
@@ -37,7 +37,7 @@ MAX_RETRIES = 4
 BASE_BACKOFF_SECS = 5.0
 MAX_BACKOFF_SECS = 60.0
 
-# Gemini stop-reason strings → our normalised values
+# Gemini stop-reason strings -> our normalised values
 _STOP_REASON_MAP = {
     "STOP": "end_turn",
     "MAX_TOKENS": "max_tokens",

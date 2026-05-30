@@ -25,9 +25,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from core.logger import get_logger
-from tools.read_tools import read_file, read_index, list_files
-from tools.write_tools import (
+from backend.core.logger import get_logger
+from backend.tools.read_tools import read_file, read_index, list_files
+from backend.tools.write_tools import (
     write_file,
     edit_file,
     update_index,
@@ -35,7 +35,7 @@ from tools.write_tools import (
     delete_file,
     read_source,
 )
-from tools.search_tools import search_wiki
+from backend.tools.search_tools import search_wiki
 
 log = get_logger(__name__)
 

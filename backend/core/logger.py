@@ -19,8 +19,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Literal
 
-from core.config import settings
-from core.wiki_manager import wm
+from backend.core.config import settings
+from backend.core.wiki_manager import wm
 
 
 # Operation types (mirrors schema.md section 9)

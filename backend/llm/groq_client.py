@@ -27,9 +27,9 @@ from typing import Any
 
 from groq import Groq
 
-from core.config import settings
-from core.logger import get_logger
-from llm.base_client import LLMResponse, ToolCall
+from backend.core.config import settings
+from backend.core.logger import get_logger
+from backend.llm.base_client import LLMResponse, ToolCall
 
 log = get_logger(__name__)
 
