@@ -4,9 +4,8 @@ main.py
 FastAPI application entry point.
 Registers all HTTP routes and the WebSocket endpoint.
 
-Run locally:
-    cd backend
-    uvicorn main:app --reload --host 0.0.0.0 --port 8000
+Run locally (from project root):
+    uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
 
 Run via Docker:
     docker compose up

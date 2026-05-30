@@ -14,6 +14,18 @@ from functools import lru_cache
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field, model_validator
 
+# Explicitly load .env into os.environ before Settings() runs.
+# pydantic-settings also reads env_file, but doing this upfront ensures
+# the values are available regardless of how the process is launched
+# (e.g. system uvicorn vs venv uvicorn).
+_ENV_FILE = Path(__file__).resolve().parent.parent / ".env"
+if _ENV_FILE.exists():
+    try:
+        from dotenv import load_dotenv as _load_dotenv
+        _load_dotenv(_ENV_FILE, override=False)
+    except ImportError:
+        pass
+
 
 class Settings(BaseSettings):
     """
@@ -22,11 +34,17 @@ class Settings(BaseSettings):
     Missing required fields raise a clear error at startup — fail fast.
     """
 
+    # model_config = SettingsConfigDict(
+    #     env_file=".env",  # loaded when running locally (not in Docker)
+    #     env_file_encoding="utf-8",
+    #     case_sensitive=False,  # GEMINI_API_KEY == gemini_api_key
+    #     extra="ignore",  # silently ignore unknown env vars
+    # )
     model_config = SettingsConfigDict(
-        env_file=".env",  # loaded when running locally (not in Docker)
+        env_file=Path(__file__).resolve().parent.parent / ".env",
         env_file_encoding="utf-8",
-        case_sensitive=False,  # GEMINI_API_KEY == gemini_api_key
-        extra="ignore",  # silently ignore unknown env vars
+        case_sensitive=False,
+        extra="ignore",
     )
 
     # LLM API Keys

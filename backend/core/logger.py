@@ -20,7 +20,6 @@ from pathlib import Path
 from typing import Literal
 
 from backend.core.config import settings
-from backend.core.wiki_manager import wm
 
 
 # Operation types (mirrors schema.md section 9)
@@ -110,6 +109,7 @@ def append_activity(
         **Notes:** No contradictions found with existing wiki content.
         ---
     """
+    from backend.core.wiki_manager import wm  # deferred to avoid eager Settings() at import time
     log = get_logger(__name__)
 
     if not wm.is_initialised():
