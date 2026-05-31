@@ -1,14 +1,20 @@
-// File tree of wiki/ — click a page to read its content
+// File tree and graph view of wiki/ — click a page to read its content
 
-import { useState, use, Suspense } from 'react'
+import { useState, use, Suspense, lazy } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { fetchWikiTree, fetchWikiPage } from '../api/admin'
+
+const WikiGraph = lazy(() => import('./WikiGraph'))
 
 // Promise cache — avoids refetch on re-render
 let treePromise = null
 function getTreePromise() {
   if (!treePromise) treePromise = fetchWikiTree()
   return treePromise
+}
+export function invalidateTreeCache() {
+  treePromise = null
+  pageCache.clear()
 }
 
 const pageCache = new Map()
@@ -79,30 +85,57 @@ function PageView({ path }) {
 
 export default function WikiBrowser() {
   const [selected, setSelected] = useState(null)
+  const [view, setView] = useState('tree') // 'tree' | 'graph'
 
   return (
-    <div className="flex gap-6 h-full">
-      {/* Tree */}
-      <div className="w-56 shrink-0 overflow-y-auto border-r border-slate-100 pr-2">
-        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">
-          Pages
-        </p>
-        <Suspense fallback={<p className="text-xs text-slate-400">Loading tree…</p>}>
-          <WikiTree selected={selected} onSelect={setSelected} />
-        </Suspense>
+    <div className="flex flex-col gap-4 h-full">
+      {/* View toggle */}
+      <div className="flex gap-2">
+        {['tree', 'graph'].map(v => (
+          <button
+            key={v}
+            onClick={() => setView(v)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors capitalize
+              ${view === v
+                ? 'bg-indigo-600 text-white'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+          >
+            {v === 'tree' ? '📁 Tree' : '🕸️ Graph'}
+          </button>
+        ))}
       </div>
 
-      {/* Page content */}
-      <div className="flex-1 overflow-y-auto">
-        {!selected && (
-          <p className="text-sm text-slate-400">Select a page to read it</p>
-        )}
-        {selected && (
-          <Suspense fallback={<p className="text-xs text-slate-400">Loading…</p>}>
-            <PageView path={selected} />
+      {view === 'tree' ? (
+        <div className="flex gap-6 flex-1 overflow-hidden">
+          {/* Tree */}
+          <div className="w-56 shrink-0 overflow-y-auto border-r border-slate-100 pr-2">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">
+              Pages
+            </p>
+            <Suspense fallback={<p className="text-xs text-slate-400">Loading tree…</p>}>
+              <WikiTree selected={selected} onSelect={setSelected} />
+            </Suspense>
+          </div>
+
+          {/* Page content */}
+          <div className="flex-1 overflow-y-auto">
+            {!selected && (
+              <p className="text-sm text-slate-400">Select a page to read it</p>
+            )}
+            {selected && (
+              <Suspense fallback={<p className="text-xs text-slate-400">Loading…</p>}>
+                <PageView path={selected} />
+              </Suspense>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className="flex-1 overflow-hidden">
+          <Suspense fallback={<p className="text-xs text-slate-400">Loading graph…</p>}>
+            <WikiGraph />
           </Suspense>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   )
 }

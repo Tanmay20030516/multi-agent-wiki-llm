@@ -81,13 +81,14 @@ class GroqClient:
                     tools=tools or None,
                     temperature=temp,
                     max_tokens=settings.max_tokens,
+                    timeout=60.0,
                 )
                 return self._parse_response(response)
 
             except Exception as e:
                 err_str = str(e)
                 is_rate_limit = "429" in err_str or "rate_limit" in err_str.lower()
-                is_transient = "503" in err_str or "500" in err_str
+                is_transient = "503" in err_str or "500" in err_str or "timeout" in err_str.lower() or "timed out" in err_str.lower()
 
                 if (is_rate_limit or is_transient) and attempt < MAX_RETRIES:
                     wait = min(
@@ -125,7 +126,7 @@ class GroqClient:
         prepared: list[dict[str, Any]] = []
 
         for msg in messages:
-            if msg["role"] == "assistant" and msg.get("tool_calls"):
+            if msg.get("role") == "assistant" and msg.get("tool_calls"):
                 prepared.append(self._serialise_tool_calls(msg))
             else:
                 prepared.append(msg)
@@ -149,7 +150,7 @@ class GroqClient:
                         "name": fn.get("name", ""),
                         "arguments": json.dumps(args)
                         if isinstance(args, dict)
-                        else args,
+                        else "{}",
                     },
                 }
             )
@@ -176,6 +177,9 @@ class GroqClient:
                 raw_args = tc.function.arguments or "{}"
                 try:
                     args = json.loads(raw_args)
+                    # json.loads("null") → None; normalise to empty dict
+                    if not isinstance(args, dict):
+                        args = {}
                 except json.JSONDecodeError:
                     log.warning(
                         "GroqClient: could not parse tool args for '%s': %r",

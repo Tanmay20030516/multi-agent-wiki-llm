@@ -57,11 +57,11 @@ class Settings(BaseSettings):
         description="Model used by the maintenance agent (ingest, lint, promote)",
     )
     query_model: str = Field(
-        default="llama-3.3-70b-versatile",
+        default="meta-llama/llama-4-scout-17b-16e-instruct",
         description="Model used by the query agent (fast chat responses)",
     )
     query_model_fallback: str = Field(
-        default="gemini-2.0-flash",
+        default="llama-3.1-8b-instant",
         description="Fallback query model if primary rate-limits or fails",
     )
 
