@@ -451,7 +451,7 @@ def execute(name: str, arguments: dict[str, Any]) -> str:
     log.debug("execute: %s(%s)", name, arguments)
 
     try:
-        result = fn(**arguments)
+        result = fn(**(arguments or {}))
         # All tool functions return strings, but guard just in case
         return str(result)
     except TypeError as e:

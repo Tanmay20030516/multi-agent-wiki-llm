@@ -1,73 +1,53 @@
-// Lint state: trigger, report, per-issue approve/reject
+// Lint state: trigger HTTP lint, show report, confirm fixes
 
-import { useState, useEffect } from 'react'
-import { useWebSocket } from './useWebSocket'
-import { triggerLint, approveFix, rejectFix } from '../api/admin'
-
-const WS_URL = `ws://${window.location.host}/ws/maintenance`
+import { useState } from 'react'
+import { triggerLint, confirmLintFixes } from '../api/admin'
 
 export function useLint() {
-  const [status, setStatus] = useState('idle')  // idle | running | done | error
-  const [events, setEvents] = useState([])
-  const [report, setReport] = useState(null)    // { issues: [...] }
+  const [status, setStatus] = useState('idle')  // idle | running | done | confirming | confirmed | error
+  const [report, setReport] = useState(null)    // markdown string from agent
+  const [sessionId, setSessionId] = useState(null)
+  const [result, setResult] = useState(null)    // markdown string after confirm
   const [error, setError] = useState(null)
-  const { lastEvent, connected } = useWebSocket(WS_URL)
-
-  useEffect(() => {
-    if (!lastEvent) return
-    const { type, payload } = lastEvent
-
-    if (type === 'tool_call' || type === 'tool_result') {
-      setEvents((prev) => [...prev, lastEvent.content || lastEvent.tool_name])
-    } else if (type === 'llm_response') {
-      setEvents((prev) => [...prev, lastEvent.content])
-    } else if (type === 'awaiting_input' || type === 'done') {
-      setStatus('done')
-      const data = lastEvent.content
-      if (data?.issues) setReport(data)
-    } else if (type === 'error') {
-      setStatus('error')
-      setError(lastEvent.content)
-    }
-  }, [lastEvent])
 
   async function runLint() {
     setStatus('running')
-    setEvents([])
     setReport(null)
+    setSessionId(null)
+    setResult(null)
     setError(null)
     try {
-      const result = await triggerLint()
-      // Backend may return report synchronously or via WS
-      if (result?.issues) {
-        setReport(result)
-        setStatus('done')
-      }
+      const data = await triggerLint()
+      setReport(data.report)
+      setSessionId(data.session_id)
+      setStatus('done')
     } catch (e) {
       setStatus('error')
       setError(e.message)
     }
   }
 
-  async function approve(issueId) {
-    await approveFix(issueId)
-    setReport((prev) => ({
-      ...prev,
-      issues: prev.issues.map((i) =>
-        i.id === issueId ? { ...i, state: 'approved' } : i
-      ),
-    }))
+  async function confirmFixes(message) {
+    if (!sessionId) return
+    setStatus('confirming')
+    setError(null)
+    try {
+      const data = await confirmLintFixes(sessionId, message)
+      setResult(data.result)
+      setStatus('confirmed')
+    } catch (e) {
+      setStatus('error')
+      setError(e.message)
+    }
   }
 
-  async function reject(issueId) {
-    await rejectFix(issueId)
-    setReport((prev) => ({
-      ...prev,
-      issues: prev.issues.map((i) =>
-        i.id === issueId ? { ...i, state: 'rejected' } : i
-      ),
-    }))
+  function dismiss() {
+    setStatus('idle')
+    setReport(null)
+    setSessionId(null)
+    setResult(null)
+    setError(null)
   }
 
-  return { status, events, report, error, connected, runLint, approve, reject }
+  return { status, report, result, error, runLint, confirmFixes, dismiss }
 }

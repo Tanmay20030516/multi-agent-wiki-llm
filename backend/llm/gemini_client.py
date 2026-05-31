@@ -340,7 +340,7 @@ class GeminiClient:
             candidate = candidates[0]
             content = candidate.content
 
-            for part in content.parts or []:
+            for part in (content.parts if content is not None and content.parts else []):
                 if hasattr(part, "text") and part.text:
                     text_parts.append(part.text)
 
