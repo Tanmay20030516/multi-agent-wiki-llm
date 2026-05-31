@@ -1,5 +1,3 @@
-// Drag-and-drop file upload + text paste area for ingesting raw sources
-
 import { useState, useCallback } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { useIngest } from '../hooks/useIngest'
@@ -32,140 +30,125 @@ export default function IngestPanel() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-sm font-semibold text-slate-700 mb-1">Ingest Source</h2>
-        <p className="text-xs text-slate-400">
-          Upload a file or paste text. The maintenance agent will process it
-          into the wiki.
-        </p>
-      </div>
+      {/* Description */}
+      <p className="text-cyber-muted text-xs leading-relaxed">
+        // upload a source file or paste raw text — the maintenance agent will
+        parse and integrate it into the wiki knowledge base.
+      </p>
 
       {/* Mode toggle */}
       <div className="flex gap-2">
-        <button
-          onClick={() => { setPasteMode(false); reset() }}
-          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors
-            ${!pasteMode
-              ? 'bg-indigo-600 text-white'
-              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
-        >
-          Upload file
-        </button>
-        <button
-          onClick={() => { setPasteMode(true); reset() }}
-          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors
-            ${pasteMode
-              ? 'bg-indigo-600 text-white'
-              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
-        >
-          Paste text
-        </button>
+        {[
+          { id: false, label: '↓ UPLOAD FILE' },
+          { id: true,  label: '⌨ PASTE TEXT'  },
+        ].map(({ id, label }) => (
+          <button
+            key={String(id)}
+            onClick={() => { setPasteMode(id); reset() }}
+            className={pasteMode === id ? 'btn-cyber' : 'btn-cyber-ghost'}
+          >
+            {label}
+          </button>
+        ))}
       </div>
 
       {!pasteMode ? (
-        // Dropzone
+        /* ── Dropzone ── */
         <div
           {...getRootProps()}
-          className={`border-2 border-dashed rounded-xl p-10 text-center
-                      cursor-pointer transition-colors
-                      ${isDragActive
-                        ? 'border-indigo-400 bg-indigo-50'
-                        : 'border-slate-200 hover:border-slate-300 bg-slate-50'}
-                      ${busy ? 'opacity-50 pointer-events-none' : ''}`}
+          className={`rounded border-2 border-dashed p-10 text-center transition-all
+            ${isDragActive
+              ? 'border-cyber-cyan bg-[#00f5ff08]'
+              : 'border-[#00f5ff22] hover:border-[#00f5ff55] bg-cyber-surface'}
+            ${busy ? 'opacity-30 pointer-events-none' : ''}`}
+          style={isDragActive
+            ? { boxShadow: '0 0 20px #00f5ff33, inset 0 0 20px #00f5ff0a' }
+            : {}}
         >
           <input {...getInputProps()} />
-          <p className="text-2xl mb-2">📄</p>
-          <p className="text-sm text-slate-600">
-            {isDragActive ? 'Drop it here…' : 'Drag & drop a file here'}
+          <div className="text-3xl mb-3 glow-cyan">⬡</div>
+          <p className="text-cyber-text text-sm mb-1">
+            {isDragActive ? '// DROP TO INJECT //' : 'drag & drop to upload'}
           </p>
-          <p className="text-xs text-slate-400 mt-1">.md · .txt · .pdf</p>
+          <p className="cyber-label mb-4">.md · .txt · .pdf</p>
           <button
             type="button"
             onClick={open}
             disabled={busy}
-            className="mt-3 px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700
-                       text-white text-xs font-medium transition-colors
-                       disabled:opacity-40 disabled:cursor-not-allowed"
+            className="btn-cyber"
           >
-            Browse files
+            BROWSE FILES
           </button>
         </div>
       ) : (
-        // Paste area
+        /* ── Paste area ── */
         <div className="space-y-3">
           <input
             type="text"
-            placeholder="Filename (e.g. my-note.md)"
+            placeholder="// filename  (e.g. my-note.md)"
             value={filename}
             onChange={(e) => setFilename(e.target.value)}
-            className="w-full rounded-lg border border-slate-200 px-3 py-2
-                       text-sm text-slate-700 placeholder:text-slate-400
-                       focus:outline-none focus:ring-2 focus:ring-indigo-300"
+            className="input-cyber"
           />
           <textarea
             rows={8}
-            placeholder="Paste your text here…"
+            placeholder="// paste source text here..."
             value={pastedText}
             onChange={(e) => setPastedText(e.target.value)}
-            className="w-full rounded-lg border border-slate-200 px-3 py-2
-                       text-sm text-slate-700 placeholder:text-slate-400
-                       focus:outline-none focus:ring-2 focus:ring-indigo-300
-                       resize-none font-mono"
+            className="input-cyber font-mono"
+            style={{ resize: 'none' }}
           />
           <button
             onClick={handlePasteSubmit}
             disabled={!pastedText.trim() || busy}
-            className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700
-                       text-white text-sm font-medium transition-colors
-                       disabled:opacity-40 disabled:cursor-not-allowed"
+            className="btn-cyber w-full"
           >
-            {busy ? 'Ingesting…' : 'Ingest text'}
+            {busy ? '// INGESTING…' : '⬆ INGEST TEXT'}
           </button>
         </div>
       )}
 
-      {/* Status + live stream */}
+      {/* Error */}
       {error && (
-        <p className="text-sm text-red-500">Error: {error}</p>
+        <div className="cyber-card-red p-3 text-xs glow-red font-mono">
+          ✗ ERROR :: {error}
+        </div>
       )}
+
+      {/* Live stream */}
       <ProgressStream events={events} status={status} />
 
-      {/* Confirmation prompt — agent has presented its plan and is waiting */}
+      {/* Confirmation gate */}
       {status === 'awaiting' && (
-        <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4 space-y-3">
-          <p className="text-sm font-medium text-indigo-800">
-            Agent is waiting for your approval to write the pages above.
+        <div className="cyber-card-magenta p-4 space-y-3 fade-in-up">
+          <p className="cyber-label glow-magenta">// AGENT AWAITING AUTHORIZATION</p>
+          <p className="text-cyber-text text-xs leading-relaxed mt-1">
+            The agent has presented its write plan above. Approve to execute all writes to the wiki.
           </p>
-          <div className="flex gap-2">
-            <button
-              onClick={() => confirm('yes')}
-              className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700
-                         text-white text-sm font-medium transition-colors"
-            >
-              ✓ Approve &amp; write
+          <div className="flex gap-2 pt-1">
+            <button onClick={() => confirm('yes')} className="btn-cyber">
+              ✓ AUTHORIZE &amp; WRITE
             </button>
-            <button
-              onClick={reject}
-              className="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200
-                         text-slate-600 text-sm font-medium transition-colors"
-            >
-              ✗ Cancel
+            <button onClick={reject} className="btn-cyber-ghost">
+              ✗ ABORT
             </button>
           </div>
         </div>
       )}
 
       {status === 'executing' && (
-        <p className="text-sm text-indigo-600 animate-pulse">Writing pages to wiki…</p>
+        <p className="text-cyber-cyan text-xs font-mono animate-pulse">
+          // writing pages to wiki…
+        </p>
       )}
 
       {status === 'done' && (
-        <button
-          onClick={reset}
-          className="text-xs text-slate-400 hover:text-slate-600 transition-colors"
-        >
-          ← Ingest another
-        </button>
+        <div className="flex items-center gap-3 pt-2">
+          <span className="glow-green text-xs">✓ INGEST COMPLETE</span>
+          <button onClick={reset} className="btn-cyber-ghost text-[0.6rem]">
+            ← NEW INGEST
+          </button>
+        </div>
       )}
     </div>
   )

@@ -1,10 +1,8 @@
-// Appears below each assistant message — lets user promote the answer to wiki
-
 import { useState } from 'react'
 import { promoteToWiki } from '../api/query'
 
 export default function SaveToWikiButton({ message, question }) {
-  const [state, setState] = useState('idle') // idle | saving | saved | error
+  const [state, setState] = useState('idle')
 
   async function handleSave() {
     setState('saving')
@@ -22,8 +20,8 @@ export default function SaveToWikiButton({ message, question }) {
 
   if (state === 'saved') {
     return (
-      <span className="text-xs text-green-600 flex items-center gap-1">
-        ✓ Saved to wiki
+      <span className="text-[0.65rem] font-mono glow-green flex items-center gap-1">
+        ✓ COMMITTED TO WIKI
       </span>
     )
   }
@@ -32,11 +30,28 @@ export default function SaveToWikiButton({ message, question }) {
     <button
       onClick={handleSave}
       disabled={state === 'saving'}
-      className="text-xs text-slate-400 hover:text-indigo-600 transition-colors
-                 disabled:opacity-50 flex items-center gap-1"
+      className="text-[0.65rem] font-mono tracking-widest transition-all
+                 flex items-center gap-1 disabled:opacity-40"
+      style={{
+        color: state === 'error' ? '#ff2d55' : '#6b7a9e',
+        textShadow: state === 'error' ? '0 0 6px #ff2d55' : 'none',
+      }}
+      onMouseEnter={e => {
+        if (state === 'idle') {
+          e.currentTarget.style.color = '#00f5ff'
+          e.currentTarget.style.textShadow = '0 0 6px #00f5ff88'
+        }
+      }}
+      onMouseLeave={e => {
+        if (state === 'idle') {
+          e.currentTarget.style.color = '#6b7a9e'
+          e.currentTarget.style.textShadow = 'none'
+        }
+      }}
     >
-      {state === 'saving' ? 'Saving…' : '↑ Save to wiki'}
-      {state === 'error' && <span className="text-red-500 ml-1">Failed</span>}
+      {state === 'saving' ? '// WRITING TO WIKI…' :
+       state === 'error'  ? '✗ WRITE FAILED' :
+                            '↑ SAVE TO WIKI'}
     </button>
   )
 }
