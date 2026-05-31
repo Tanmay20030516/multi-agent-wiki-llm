@@ -20,7 +20,7 @@ from pydantic import BaseModel, Field
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 
 from backend.agents.maintenance_agent import run_ingest, continue_ingest
-from backend.core.logger import get_logger
+from backend.core.logger import get_logger, append_activity
 from backend.core.wiki_manager import wm
 
 # Shared session store with websocket.py — import from there
@@ -85,6 +85,7 @@ async def ingest(req: IngestRequest) -> IngestPlanResponse:
                 _sessions[session_id] = {
                     "workflow": "ingest",
                     "messages": event.messages,
+                    "source_path": req.source_path,
                 }
                 asyncio.create_task(_expire_session(session_id))
 
@@ -125,6 +126,15 @@ async def ingest_confirm(req: IngestConfirmRequest) -> IngestResultResponse:
             tools_used.append(event.tool_name)
         if event.type == "done":
             result = event.content
+
+    # Fallback log entry if agent forgot to call append_log
+    if "append_log" not in tools_used:
+        source_path = session.get("source_path", "unknown-source")
+        append_activity(
+            operation="ingest",
+            title=source_path.replace("/", "-").replace(".md", "").replace(".txt", ""),
+            summary=f"Ingest completed ({len(tools_used)} tool calls). Pages written to wiki.",
+        )
 
     return IngestResultResponse(
         result=result,

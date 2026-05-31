@@ -14,7 +14,7 @@ from pydantic import BaseModel, Field
 from fastapi import APIRouter, HTTPException
 
 from backend.agents.maintenance_agent import run_lint, continue_lint
-from backend.core.logger import get_logger
+from backend.core.logger import get_logger, append_activity
 
 from backend.api.websocket import _sessions, _expire_session
 
@@ -102,6 +102,15 @@ async def lint_confirm(req: LintConfirmRequest) -> LintResultResponse:
             tools_used.append(event.tool_name)
         if event.type == "done":
             result = event.content
+
+    # Fallback log entry if agent forgot to call append_log
+    if "append_log" not in tools_used:
+        from datetime import date
+        append_activity(
+            operation="lint",
+            title=f"health-check-{date.today().isoformat()}",
+            summary=f"Lint fixes applied ({len(tools_used)} tool calls). User approved fixes.",
+        )
 
     return LintResultResponse(
         result=result,

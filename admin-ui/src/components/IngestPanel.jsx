@@ -15,11 +15,12 @@ export default function IngestPanel() {
     if (accepted[0]) ingestFile(accepted[0])
   }, [ingestFile])
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+  const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     onDrop,
     accept: { 'text/*': ['.md', '.txt'], 'application/pdf': ['.pdf'] },
     multiple: false,
     disabled: status === 'uploading' || status === 'ingesting',
+    noClick: true,
   })
 
   function handlePasteSubmit() {
@@ -75,9 +76,19 @@ export default function IngestPanel() {
           <input {...getInputProps()} />
           <p className="text-2xl mb-2">📄</p>
           <p className="text-sm text-slate-600">
-            {isDragActive ? 'Drop it here…' : 'Drag & drop a file, or click to browse'}
+            {isDragActive ? 'Drop it here…' : 'Drag & drop a file here'}
           </p>
           <p className="text-xs text-slate-400 mt-1">.md · .txt · .pdf</p>
+          <button
+            type="button"
+            onClick={open}
+            disabled={busy}
+            className="mt-3 px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700
+                       text-white text-xs font-medium transition-colors
+                       disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Browse files
+          </button>
         </div>
       ) : (
         // Paste area

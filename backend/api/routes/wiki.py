@@ -12,6 +12,7 @@ PUT  /api/wiki/schema      — Update schema.md (user-only, not agent)
 
 from __future__ import annotations
 
+import re as _re
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
@@ -28,17 +29,11 @@ class PageResponse(BaseModel):
     content: str
 
 
-class TreeEntry(BaseModel):
-    slug: str
+class TreeNode(BaseModel):
+    type: str        # "directory" | "file"
+    name: str
     path: str
-
-
-class TreeResponse(BaseModel):
-    sources: list[TreeEntry]
-    entities: list[TreeEntry]
-    concepts: list[TreeEntry]
-    analyses: list[TreeEntry]
-    total: int
+    children: list["TreeNode"] | None = None
 
 
 class SchemaUpdateRequest(BaseModel):
@@ -75,28 +70,26 @@ async def get_schema() -> PageResponse:
     return PageResponse(path="schema.md", slug="schema", content=content)
 
 
-@router.get("/tree", response_model=TreeResponse)
-async def get_tree() -> TreeResponse:
-    """Return a directory tree of all wiki pages grouped by type."""
-    tree: dict[str, list[TreeEntry]] = {}
+@router.get("/tree", response_model=list[TreeNode])
+async def get_tree() -> list[TreeNode]:
+    """Return a directory tree of all wiki pages as a nested list of nodes."""
+    result: list[TreeNode] = []
 
     for page_type, dir_name in PAGE_TYPE_DIRS.items():
         pages = wm.list_wiki_pages(page_type)
-        tree[dir_name] = [
-            TreeEntry(
-                slug=p.stem,
+        children = [
+            TreeNode(
+                type="file",
+                name=p.name,
                 path=str(p.relative_to(wm.wiki_root)),
             )
             for p in pages
         ]
+        result.append(
+            TreeNode(type="directory", name=dir_name, path=dir_name, children=children)
+        )
 
-    return TreeResponse(
-        sources=tree.get("sources", []),
-        entities=tree.get("entities", []),
-        concepts=tree.get("concepts", []),
-        analyses=tree.get("analyses", []),
-        total=sum(len(v) for v in tree.values()),
-    )
+    return result
 
 
 @router.get("/page/{path:path}", response_model=PageResponse)
@@ -127,6 +120,51 @@ async def get_page(path: str) -> PageResponse:
         slug=full_path.stem,
         content=content,
     )
+
+
+_WIKILINK_RE = _re.compile(r"\[\[([^\]]+)\]\]")
+
+
+@router.get("/graph")
+async def get_graph() -> dict:
+    """
+    Return nodes and edges for a force-directed graph of the wiki.
+    Nodes are all wiki pages; edges come from [[wikilink]] references.
+    """
+    nodes: list[dict] = []
+    edges: list[dict] = []
+    slug_to_id: dict[str, str] = {}
+
+    for page_type, dir_name in PAGE_TYPE_DIRS.items():
+        pages = wm.list_wiki_pages(page_type)
+        for p in pages:
+            node_id = str(p.relative_to(wm.wiki_root))
+            slug = p.stem
+            slug_to_id[slug] = node_id
+            nodes.append({"id": node_id, "label": slug, "type": page_type})
+
+    # Second pass: parse wikilinks to build edges
+    for node in nodes:
+        full_path = wm.wiki_root / node["id"]
+        try:
+            content = full_path.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        for match in _WIKILINK_RE.finditer(content):
+            target_slug = match.group(1)
+            if target_slug in slug_to_id and slug_to_id[target_slug] != node["id"]:
+                edges.append({"source": node["id"], "target": slug_to_id[target_slug]})
+
+    # Deduplicate edges
+    seen: set[tuple[str, str]] = set()
+    unique_edges: list[dict] = []
+    for e in edges:
+        key = (min(e["source"], e["target"]), max(e["source"], e["target"]))
+        if key not in seen:
+            seen.add(key)
+            unique_edges.append(e)
+
+    return {"nodes": nodes, "edges": unique_edges}
 
 
 @router.put("/schema")

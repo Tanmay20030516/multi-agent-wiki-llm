@@ -25,6 +25,12 @@ export async function fetchLog() {
   return res.json()
 }
 
+export async function fetchWikiGraph() {
+  const res = await fetch('/api/wiki/graph')
+  if (!res.ok) throw new Error(`Failed to fetch wiki graph: ${res.status}`)
+  return res.json()
+}
+
 // Schema
 export async function fetchSchema() {
   const res = await fetch('/api/wiki/schema')
@@ -34,7 +40,7 @@ export async function fetchSchema() {
 
 export async function saveSchema(content) {
   const res = await fetch('/api/wiki/schema', {
-    method: 'POST',
+    method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ content }),
   })
@@ -81,15 +87,13 @@ export async function triggerLint() {
   return res.json()
 }
 
-export async function approveFix(issueId) {
-  const res = await fetch(`/api/lint/approve/${issueId}`, { method: 'POST' })
-  if (!res.ok) throw new Error(`Approve failed: ${res.status}`)
-  return res.json()
-}
-
-export async function rejectFix(issueId) {
-  const res = await fetch(`/api/lint/reject/${issueId}`, { method: 'POST' })
-  if (!res.ok) throw new Error(`Reject failed: ${res.status}`)
+export async function confirmLintFixes(sessionId, message) {
+  const res = await fetch('/api/lint/confirm', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ session_id: sessionId, message }),
+  })
+  if (!res.ok) throw new Error(`Lint confirm failed: ${res.status}`)
   return res.json()
 }
 
