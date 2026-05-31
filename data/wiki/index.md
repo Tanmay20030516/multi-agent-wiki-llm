@@ -1,6 +1,6 @@
 # Wiki Index
 
-_Last updated: 2026-05-31. 19 pages total._
+_Last updated: 2026-05-31. 20 pages total._
 
 ## Sources (3 pages)
 
@@ -40,3 +40,5 @@ _Last updated: 2026-05-31. 19 pages total._
 - [[transformer-encoder]] — Encoder component of the Transformer architecture, processes input sequences contextually.
 - [[transformer]] — Transformer: Neural network architecture relying on self-attention mechanisms, dominant in NLP.
 ## Analyses (0 pages)
+
+- [[positional-embeddings-analysis]] — Analyzes why positional embeddings are necessary for Transformers to handle sequence order due to the permutation-invariance of self-attention.

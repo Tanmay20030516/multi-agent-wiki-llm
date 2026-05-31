@@ -1,5 +1,15 @@
 # Activity Log
 
+## [2026-05-31 12:09] query->promote | positional-embeddings-analysis
+
+**Operation:** query->promote
+**Summary:** Promoted query result to analyses/positional-embeddings-analysis.md.
+**Pages created:** [[positional-embeddings-analysis]]
+**Pages updated:** [[transformer]], [[self-attention]], [[attention-mechanism]], [[vaswani-2017-attention]], [[index]]
+**Notes:** Promoted a query about positional embeddings to a full analysis page. Updated related links on core Transformer concepts and the original Vaswani paper.
+
+---
+
 ## [2026-05-31 10:13] lint | health-check-2026-06-01
 
 **Operation:** lint

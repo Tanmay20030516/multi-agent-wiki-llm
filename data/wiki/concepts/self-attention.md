@@ -7,7 +7,7 @@ source_count: 2
 also_known_as: ["intra-attention"]
 introduced_by: "vaswani-2017-attention"
 tags: [architecture, transformer, attention]
-related: ["attention-mechanism", "transformer", "vaswani-2017-attention"]
+related: ["attention-mechanism", "transformer", "vaswani-2017-attention", "positional-embeddings-analysis"]
 ---
 
 # Self-Attention
