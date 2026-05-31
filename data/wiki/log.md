@@ -1,5 +1,24 @@
 # Activity Log
 
+## [2026-05-31 10:13] lint | health-check-2026-06-01
+
+**Operation:** lint
+**Summary:** Full wiki health check and repair. Fixed index drift, schema violations, and missing pages.
+**Pages created:** [[entities/google]], [[entities/openai]], [[entities/bert]], [[entities/bert-base]], [[entities/bert-large]], [[entities/gpt]], [[concepts/supervised-learning]], [[sources/vaswani-2017-attention]]
+**Pages updated:** [[index]], [[sources/devlin-2019-bert]], [[concepts/attention-mechanism]], [[concepts/transformer-encoder]], [[concepts/transformer]], [[concepts/self-attention]]
+**Notes:** Fixed major index drift, schema violations in sources/vaswani-2017-attention and concepts/self-attention. Created missing entity pages for Google, OpenAI, BERT, and GPT. Resolved broken wikilinks and frontmatter gaps. Moved google.md from sources to entities.
+
+---
+
+## [2026-05-31 09:50] query->promote | what-is-next-sentence-prediction
+
+**Operation:** query->promote
+**Summary:** Promoted query answer to wiki. Question: what is next sentence prediction?
+**Pages created:** —
+**Pages updated:** —
+
+---
+
 ## [2026-05-31 08:48] lint | health-check-2026-05-31
 
 **Operation:** lint

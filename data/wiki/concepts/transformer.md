@@ -7,7 +7,7 @@ source_count: 1
 also_known_as: []
 introduced_by: "vaswani-2017-attention"
 tags: ["architecture", "nlp", "deep-learning", "sequence-models"]
-related: ["vaswani-2017-attention", "radford-2018-improving", "attention-mechanism"]
+related: ["vaswani-2017-attention", "radford-2018-improving", "attention-mechanism", "self-attention"]
 ---
 
 # Transformer

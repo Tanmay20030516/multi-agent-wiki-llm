@@ -7,7 +7,7 @@ source_count: 1
 also_known_as: []
 introduced_by: "vaswani-2017-attention"
 tags: [architecture, nlp, transformer]
-related: ["attention-mechanism", "devlin-2019-bert", "bert"]
+related: ["attention-mechanism", "devlin-2019-bert", "bert", "vaswani-2017-attention"]
 ---
 
 # Transformer Encoder

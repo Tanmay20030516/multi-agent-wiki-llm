@@ -7,7 +7,7 @@ source_count: 1
 also_known_as: []
 introduced_by: "vaswani-2017-attention"
 tags: [architecture, nlp, deep-learning]
-related: ["transformer-encoder", "devlin-2019-bert"]
+related: ["transformer-encoder", "devlin-2019-bert", "vaswani-2017-attention", "self-attention"]
 ---
 
 # Attention Mechanism
