@@ -1,12 +1,40 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, Component } from 'react'
 import ForceGraph2D from 'react-force-graph-2d'
 import { fetchWikiGraph } from '../api/admin'
 
 const TYPE_COLORS = {
-  source:   '#6366f1', // indigo
-  entity:   '#f59e0b', // amber
-  concept:  '#10b981', // emerald
-  analysis: '#ec4899', // pink
+  source: '#00f5ff',
+  entity: '#ff00cc',
+  concept: '#7c3aff',
+  analysis: '#ffaa00',
+}
+const TYPE_GLOW = {
+  source: '0 0 8px #00f5ff, 0 0 16px #00f5ff66',
+  entity: '0 0 8px #ff00cc, 0 0 16px #ff00cc66',
+  concept: '0 0 8px #7c3aff, 0 0 16px #7c3aff66',
+  analysis: '0 0 8px #ffaa00, 0 0 16px #ffaa0066',
+}
+
+// Error boundary to catch ForceGraph2D crashes
+class GraphErrorBoundary extends Component {
+  constructor(props) {
+    super(props)
+    this.state = { error: null }
+  }
+  static getDerivedStateFromError(error) {
+    return { error: error.message || String(error) }
+  }
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="p-6 text-center">
+          <p className="glow-red text-xs font-mono mb-2">✗ GRAPH RENDER ERROR</p>
+          <p className="text-cyber-muted text-xs font-mono">{this.state.error}</p>
+        </div>
+      )
+    }
+    return this.props.children
+  }
 }
 
 export default function WikiGraph() {
@@ -17,75 +45,113 @@ export default function WikiGraph() {
 
   useEffect(() => {
     fetchWikiGraph()
-      .then(data => setGraphData({ nodes: data.nodes, links: data.edges }))
+      .then(data => {
+        // Deep-clone nodes/links to avoid mutation issues
+        const nodes = data.nodes.map(n => ({ ...n }))
+        const edges = (data.edges || []).map(e => ({ ...e }))
+        setGraphData({ nodes, links: edges })
+      })
       .catch(e => setError(e.message))
   }, [])
 
-  if (error) return <p className="text-sm text-red-500">Error: {error}</p>
-  if (!graphData) return <p className="text-xs text-slate-400">Loading graph…</p>
-  if (graphData.nodes.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center h-64 text-slate-400 space-y-2">
-        <span className="text-4xl">🗺️</span>
-        <p className="text-sm">No wiki pages yet — ingest some sources first.</p>
-      </div>
-    )
-  }
+  if (error) return (
+    <div className="p-4 glow-red text-xs font-mono">✗ GRAPH ERROR :: {error}</div>
+  )
+  if (!graphData) return (
+    <div className="p-4 text-cyber-muted text-xs font-mono blink">// loading graph data</div>
+  )
+  if (graphData.nodes.length === 0) return (
+    <div className="h-full flex flex-col items-center justify-center gap-3 text-cyber-muted">
+      <span className="text-5xl glow-cyan" style={{ opacity: 0.2 }}>⬡</span>
+      <p className="cyber-label">NO NODES — INGEST SOURCES FIRST</p>
+    </div>
+  )
 
   return (
-    <div className="flex flex-col gap-3 h-full">
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       {/* Legend */}
-      <div className="flex flex-wrap gap-4 text-xs text-slate-500">
+      <div className="flex items-center gap-5 px-4 py-2 border-b border-[#00f5ff15]"
+        style={{ background: '#080818', flexShrink: 0 }}>
         {Object.entries(TYPE_COLORS).map(([type, color]) => (
           <span key={type} className="flex items-center gap-1.5">
-            <span className="inline-block w-3 h-3 rounded-full" style={{ background: color }} />
-            {type}
+            <span className="w-2 h-2 rounded-full"
+              style={{ background: color, boxShadow: `0 0 4px ${color}` }} />
+            <span className="cyber-label" style={{ color }}>{type}</span>
           </span>
         ))}
-        <span className="text-slate-400 ml-auto">{graphData.nodes.length} nodes · {graphData.links.length} edges</span>
+        <span className="ml-auto cyber-label">
+          {graphData.nodes.length} nodes · {graphData.links.length} edges
+        </span>
       </div>
 
-      {/* Selected node info */}
+      {/* Selected node */}
       {selected && (
-        <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 flex items-center gap-2">
-          <span className="inline-block w-2 h-2 rounded-full" style={{ background: TYPE_COLORS[selected.type] ?? '#94a3b8' }} />
-          <span className="font-medium">{selected.label}</span>
-          <span className="text-slate-400">({selected.type})</span>
-          <button onClick={() => setSelected(null)} className="ml-auto text-slate-400 hover:text-slate-600">✕</button>
+        <div className="px-4 py-2 flex items-center gap-2 border-b border-[#00f5ff15]"
+          style={{ background: '#0a0a20', flexShrink: 0 }}>
+          <span className="w-2 h-2 rounded-full"
+            style={{
+              background: TYPE_COLORS[selected.type] ?? '#00f5ff',
+              boxShadow: TYPE_GLOW[selected.type] ?? 'none',
+            }} />
+          <span className="text-xs font-mono glow-cyan">{selected.label}</span>
+          <span className="cyber-label ml-1">({selected.type})</span>
+          <button onClick={() => setSelected(null)}
+            className="ml-auto text-cyber-muted hover:text-cyber-text text-sm transition-colors">
+            ✕
+          </button>
         </div>
       )}
 
       {/* Graph canvas */}
-      <div className="flex-1 rounded-xl border border-slate-200 overflow-hidden bg-white">
-        <ForceGraph2D
-          ref={fgRef}
-          graphData={graphData}
-          nodeLabel="label"
-          nodeColor={node => TYPE_COLORS[node.type] ?? '#94a3b8'}
-          nodeRelSize={5}
-          linkColor={() => '#cbd5e1'}
-          linkWidth={1}
-          onNodeClick={node => setSelected(node)}
-          nodeCanvasObject={(node, ctx, globalScale) => {
-            const label = node.label
-            const fontSize = Math.max(10 / globalScale, 4)
-            const r = 5
-            ctx.beginPath()
-            ctx.arc(node.x, node.y, r, 0, 2 * Math.PI)
-            ctx.fillStyle = TYPE_COLORS[node.type] ?? '#94a3b8'
-            ctx.fill()
-            if (globalScale > 1.5) {
-              ctx.font = `${fontSize}px Sans-Serif`
-              ctx.fillStyle = '#334155'
+      <div style={{ flex: 1, minHeight: '400px', overflow: 'hidden' }}>
+        <GraphErrorBoundary>
+          <ForceGraph2D
+            ref={fgRef}
+            graphData={graphData}
+            backgroundColor="#080818"
+            nodeLabel="label"
+            nodeColor={n => TYPE_COLORS[n.type] ?? '#6b7a9e'}
+            nodeRelSize={5}
+            linkColor={() => 'rgba(0,245,255,0.15)'}
+            linkWidth={1.2}
+            onNodeClick={n => setSelected(n)}
+            nodeCanvasObjectMode={() => 'replace'}
+            nodeCanvasObject={(node, ctx, globalScale) => {
+              if (node.x == null || node.y == null) return
+              const color = TYPE_COLORS[node.type] ?? '#6b7a9e'
+              const r = 5
+
+              // Outer glow halo
+              const grad = ctx.createRadialGradient(node.x, node.y, 0, node.x, node.y, r * 2.5)
+              grad.addColorStop(0, color + '66')
+              grad.addColorStop(0.5, color + '22')
+              grad.addColorStop(1, color + '00')
+              ctx.beginPath()
+              ctx.arc(node.x, node.y, r * 2, 0, 2 * Math.PI)
+              ctx.fillStyle = grad
+              ctx.fill()
+
+              // Solid core
+              ctx.beginPath()
+              ctx.arc(node.x, node.y, r, 0, 2 * Math.PI)
+              ctx.fillStyle = color
+              ctx.shadowColor = color
+              ctx.shadowBlur = 5
+              ctx.fill()
+              ctx.shadowBlur = 0
+
+              // Label
+              const fs = Math.max(10 / globalScale, 4)
+              ctx.font = `${fs}px 'JetBrains Mono', monospace`
+              ctx.fillStyle = color + 'dd'
               ctx.textAlign = 'center'
               ctx.textBaseline = 'top'
-              ctx.fillText(label, node.x, node.y + r + 2)
-            }
-          }}
-          cooldownTicks={100}
-          width={undefined}
-          height={undefined}
-        />
+              ctx.fillText(node.label, node.x, node.y + r + 2)
+            }}
+            cooldownTicks={150}
+            onEngineStop={() => fgRef.current?.zoomToFit?.(400, 40)}
+          />
+        </GraphErrorBoundary>
       </div>
     </div>
   )

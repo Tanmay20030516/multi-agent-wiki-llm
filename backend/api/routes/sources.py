@@ -2,11 +2,13 @@
 api/routes/sources.py
 
 GET   /api/sources/list  — List raw source files
-POST  /api/promote       — Promote a query result to an analysis page
+POST  /api/promote       — Promote a query result to an analysis page (single-shot)
+POST  /api/promote/confirm — (legacy) Confirm a two-step promote session
 """
 
 from __future__ import annotations
 
+import re
 import uuid
 import asyncio
 
@@ -15,13 +17,15 @@ from fastapi import APIRouter, HTTPException
 
 from backend.agents.maintenance_agent import run_promote, continue_promote
 from backend.core.wiki_manager import wm, RAW_SUBDIRS
-from backend.core.logger import get_logger
+from backend.core.logger import get_logger, append_activity
 
 from backend.api.websocket import _sessions, _expire_session
 
 log = get_logger(__name__)
 router = APIRouter(prefix="/api", tags=["sources"])
 
+
+# ── Source listing ─────────────────────────────────────────────────────────────
 
 class SourceEntry(BaseModel):
     path: str
@@ -33,29 +37,6 @@ class SourceEntry(BaseModel):
 class SourceListResponse(BaseModel):
     sources: list[SourceEntry]
     total: int
-
-
-class PromoteRequest(BaseModel):
-    question: str = Field(..., description="The original question")
-    answer: str = Field(..., description="The answer text to promote")
-    slug: str | None = Field(
-        default=None, description="Suggested slug for the analysis page"
-    )
-
-
-class PromotePlanResponse(BaseModel):
-    session_id: str
-    plan: str
-
-
-class PromoteConfirmRequest(BaseModel):
-    session_id: str
-    message: str = Field(default="yes")
-
-
-class PromoteResultResponse(BaseModel):
-    result: str
-    iterations: int
 
 
 @router.get("/sources/list", response_model=SourceListResponse)
@@ -79,43 +60,131 @@ async def list_sources() -> SourceListResponse:
     return SourceListResponse(sources=entries, total=len(entries))
 
 
-@router.post("/promote", response_model=PromotePlanResponse)
-async def promote(req: PromoteRequest) -> PromotePlanResponse:
-    """
-    Start promoting a query result to an analysis page.
-    Returns the agent's plan and a session_id.
-    Call POST /api/promote/confirm with the session_id to execute.
-    """
-    plan = ""
-    session_id: str | None = None
+# ── Promote ────────────────────────────────────────────────────────────────────
 
-    async for event in run_promote(
-        question=req.question,
-        answer=req.answer,
-        suggested_slug=req.slug,
-    ):
-        if event.type == "done":
-            plan = event.content
-            if event.messages is not None:
-                session_id = str(uuid.uuid4())[:8]
-                _sessions[session_id] = {
-                    "workflow": "promote",
-                    "messages": event.messages,
-                }
-                asyncio.create_task(_expire_session(session_id))
+class PromoteRequest(BaseModel):
+    """
+    Accepts both the chat-ui field names and the original API names so
+    neither caller breaks.
 
-    if session_id is None:
+    Chat-ui sends:   { title, content, source_question }
+    Legacy API sends: { question, answer, slug }
+    """
+    # Chat-ui fields
+    source_question: str | None = Field(default=None)
+    content: str | None = Field(default=None)
+    title: str | None = Field(default=None)
+    # Legacy / API fields
+    question: str | None = Field(default=None)
+    answer: str | None = Field(default=None)
+    slug: str | None = Field(default=None)
+
+    @property
+    def resolved_question(self) -> str:
+        return (self.source_question or self.question or "").strip()
+
+    @property
+    def resolved_answer(self) -> str:
+        return (self.content or self.answer or "").strip()
+
+    @property
+    def resolved_slug(self) -> str | None:
+        if self.slug:
+            return self.slug
+        if self.title:
+            return re.sub(r"[^a-z0-9]+", "-", self.title.lower()).strip("-")[:60]
+        return None
+
+
+class PromoteResultResponse(BaseModel):
+    result: str
+    iterations: int
+    tool_calls_made: list[str]
+
+
+@router.post("/promote", response_model=PromoteResultResponse)
+async def promote(req: PromoteRequest) -> PromoteResultResponse:
+    """
+    Promote a query answer to a permanent analysis wiki page.
+
+    Single-shot: the maintenance agent plans the page internally, then
+    auto-confirms and executes the writes — no second round-trip required.
+    Callers get back the agent's final summary and a list of tool calls made.
+    """
+    question = req.resolved_question
+    answer = req.resolved_answer
+    slug_hint = req.resolved_slug
+
+    if not question or not answer:
         raise HTTPException(
-            status_code=500,
-            detail="Promote did not produce a plan. Check server logs.",
+            status_code=422,
+            detail=(
+                "Must supply either (source_question + content) "
+                "or (question + answer)."
+            ),
         )
 
-    return PromotePlanResponse(session_id=session_id, plan=plan)
+    result = ""
+    iterations = 0
+    tools_used: list[str] = []
+    saved_messages = None
+
+    # Phase 1 — agent reads index, proposes the page structure, stops
+    async for event in run_promote(
+        question=question,
+        answer=answer,
+        suggested_slug=slug_hint,
+    ):
+        iterations = event.iteration
+        if event.type == "tool_call":
+            tools_used.append(event.tool_name)
+        if event.type == "done":
+            result = event.content
+            saved_messages = event.messages
+
+    # Phase 2 — auto-confirm so the agent executes without a second HTTP call
+    if saved_messages is not None:
+        async for event in continue_promote(
+            messages=saved_messages,
+            user_response="yes, proceed with all writes",
+        ):
+            iterations = event.iteration
+            if event.type == "tool_call":
+                tools_used.append(event.tool_name)
+            if event.type == "done":
+                result = event.content
+
+    # Fallback log entry if the agent forgot to call append_log
+    if "append_log" not in tools_used:
+        append_activity(
+            operation="query->promote",
+            title=slug_hint or "analysis",
+            summary=f"Promoted query answer to wiki. Question: {question[:120]}",
+        )
+
+    log.info("Promote complete — slug: %s, %d tool calls", slug_hint, len(tools_used))
+    return PromoteResultResponse(
+        result=result,
+        iterations=iterations,
+        tool_calls_made=tools_used,
+    )
 
 
-@router.post("/promote/confirm", response_model=PromoteResultResponse)
-async def promote_confirm(req: PromoteConfirmRequest) -> PromoteResultResponse:
-    """Confirm and execute a promote operation."""
+# ── Legacy confirm endpoint (kept for backwards compat / WebSocket flow) ───────
+
+class PromoteConfirmRequest(BaseModel):
+    session_id: str
+    message: str = Field(default="yes")
+
+
+class LegacyPromoteResultResponse(BaseModel):
+    result: str
+    iterations: int
+
+
+@router.post("/promote/confirm", response_model=LegacyPromoteResultResponse)
+async def promote_confirm(req: PromoteConfirmRequest) -> LegacyPromoteResultResponse:
+    """(Legacy) Confirm and execute a two-step promote session."""
     session = _sessions.pop(req.session_id, None)
     if session is None:
         raise HTTPException(status_code=404, detail="Session not found or expired.")
@@ -131,4 +200,4 @@ async def promote_confirm(req: PromoteConfirmRequest) -> PromoteResultResponse:
         if event.type == "done":
             result = event.content
 
-    return PromoteResultResponse(result=result, iterations=iterations)
+    return LegacyPromoteResultResponse(result=result, iterations=iterations)

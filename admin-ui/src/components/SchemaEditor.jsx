@@ -1,5 +1,3 @@
-// Textarea for editing schema.md with a save button
-
 import { useState, use, Suspense } from 'react'
 import { fetchSchema, saveSchema } from '../api/admin'
 
@@ -18,10 +16,9 @@ function Editor() {
     setSaveState('saving')
     try {
       await saveSchema(content)
-      // Bust cache so next open re-fetches
       schemaPromise = null
       setSaveState('saved')
-      setTimeout(() => setSaveState('idle'), 2000)
+      setTimeout(() => setSaveState('idle'), 2500)
     } catch {
       setSaveState('error')
     }
@@ -29,33 +26,51 @@ function Editor() {
 
   return (
     <div className="space-y-3">
-      <textarea
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        rows={28}
-        className="w-full rounded-xl border border-slate-200 px-4 py-3
-                   text-xs font-mono text-slate-700 leading-relaxed
-                   focus:outline-none focus:ring-2 focus:ring-indigo-300
-                   resize-none"
-        spellCheck={false}
-      />
+      {/* Editor */}
+      <div className="cyber-card overflow-hidden">
+        {/* Editor titlebar */}
+        <div className="flex items-center gap-2 px-4 py-2 border-b border-[#00f5ff15]"
+          style={{ background: '#080818' }}>
+          <span className="w-2 h-2 rounded-full bg-cyber-red" style={{ boxShadow: '0 0 4px #ff2d55' }} />
+          <span className="w-2 h-2 rounded-full bg-cyber-amber" style={{ boxShadow: '0 0 4px #ffaa00' }} />
+          <span className="w-2 h-2 rounded-full bg-cyber-green" style={{ boxShadow: '0 0 4px #00ff88' }} />
+          <span className="cyber-label ml-2">schema.md</span>
+          <span className="ml-auto cyber-label text-cyber-cyan" style={{ fontSize: '0.55rem' }}>
+            {content.length.toLocaleString()} chars
+          </span>
+        </div>
+        <textarea
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          rows={28}
+          spellCheck={false}
+          className="w-full px-4 py-4 text-[0.75rem] font-mono leading-relaxed
+                     outline-none resize-none bg-transparent
+                     text-cyber-text caret-cyber-cyan"
+          style={{ minHeight: '420px' }}
+          placeholder="// schema.md content…"
+        />
+      </div>
 
+      {/* Save controls */}
       <div className="flex items-center gap-3">
         <button
           onClick={handleSave}
           disabled={saveState === 'saving'}
-          className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700
-                     text-white text-sm font-medium transition-colors
-                     disabled:opacity-40 disabled:cursor-not-allowed"
+          className="btn-cyber"
         >
-          {saveState === 'saving' ? 'Saving…' : 'Save schema'}
+          {saveState === 'saving' ? '// WRITING…' : '⬆ SAVE SCHEMA'}
         </button>
 
         {saveState === 'saved' && (
-          <span className="text-xs text-green-600">✓ Saved</span>
+          <span className="glow-green text-xs font-mono fade-in-up">
+            ✓ SCHEMA UPDATED
+          </span>
         )}
         {saveState === 'error' && (
-          <span className="text-xs text-red-500">Save failed</span>
+          <span className="glow-red text-xs font-mono">
+            ✗ WRITE FAILED
+          </span>
         )}
       </div>
     </div>
@@ -65,15 +80,14 @@ function Editor() {
 export default function SchemaEditor() {
   return (
     <div className="space-y-4">
-      <div>
-        <h2 className="text-sm font-semibold text-slate-700 mb-1">Schema</h2>
-        <p className="text-xs text-slate-400">
-          Edit schema.md — this tells the maintenance agent how to structure
-          every wiki page.
-        </p>
-      </div>
+      <p className="text-cyber-muted text-xs leading-relaxed">
+        // edit schema.md — defines page structure, frontmatter templates,
+        and maintenance agent instructions. changes take effect immediately.
+      </p>
 
-      <Suspense fallback={<p className="text-xs text-slate-400">Loading schema…</p>}>
+      <Suspense fallback={
+        <p className="text-cyber-muted text-xs font-mono">// loading schema…</p>
+      }>
         <Editor />
       </Suspense>
     </div>

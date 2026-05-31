@@ -1,12 +1,9 @@
-// File tree and graph view of wiki/ — click a page to read its content
-
 import { useState, use, Suspense, lazy } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { fetchWikiTree, fetchWikiPage } from '../api/admin'
 
 const WikiGraph = lazy(() => import('./WikiGraph'))
 
-// Promise cache — avoids refetch on re-render
 let treePromise = null
 function getTreePromise() {
   if (!treePromise) treePromise = fetchWikiTree()
@@ -23,25 +20,41 @@ function getPagePromise(path) {
   return pageCache.get(path)
 }
 
+const TYPE_COLOR = {
+  sources:  '#00f5ff',
+  entities: '#ff00cc',
+  concepts: '#7c3aff',
+  analyses: '#ffaa00',
+}
+
 function TreeNode({ node, depth, selected, onSelect }) {
   const isDir = node.type === 'directory'
-  const indent = depth * 16
+  const indent = depth * 14
+  const color = TYPE_COLOR[node.name] ?? '#00f5ff'
 
   return (
     <div>
       <button
         onClick={() => !isDir && onSelect(node.path)}
-        style={{ paddingLeft: `${indent + 8}px` }}
-        className={`w-full text-left py-1 pr-3 text-xs rounded transition-colors
+        className={`w-full text-left py-1 pr-3 text-[0.72rem] rounded transition-all
           flex items-center gap-1.5
           ${isDir
-            ? 'text-slate-500 font-semibold cursor-default'
+            ? 'text-cyber-muted cursor-default font-bold tracking-widest uppercase'
             : selected === node.path
-              ? 'bg-indigo-50 text-indigo-700'
-              : 'text-slate-600 hover:bg-slate-100'}`}
+              ? 'text-cyber-cyan'
+              : 'text-cyber-muted hover:text-cyber-text'}`}
+        style={
+          isDir
+            ? { paddingLeft: `${indent + 8}px`, color, textShadow: `0 0 8px ${color}66`, paddingTop: '0.5rem' }
+            : selected === node.path
+              ? { paddingLeft: `${indent + 8}px`, color: '#00f5ff', textShadow: '0 0 6px #00f5ff', background: 'rgba(0,245,255,0.05)' }
+              : { paddingLeft: `${indent + 8}px` }
+        }
       >
-        <span>{isDir ? '📁' : '📄'}</span>
-        {node.name}
+        <span className="shrink-0" style={{ fontSize: '0.6rem', opacity: 0.7 }}>
+          {isDir ? '◈' : '›'}
+        </span>
+        {node.name.replace('.md', '')}
       </button>
 
       {isDir && node.children?.map((child) => (
@@ -60,15 +73,9 @@ function TreeNode({ node, depth, selected, onSelect }) {
 function WikiTree({ selected, onSelect }) {
   const tree = use(getTreePromise())
   return (
-    <div className="space-y-0.5">
+    <div className="space-y-0">
       {tree.map((node) => (
-        <TreeNode
-          key={node.path}
-          node={node}
-          depth={0}
-          selected={selected}
-          onSelect={onSelect}
-        />
+        <TreeNode key={node.path} node={node} depth={0} selected={selected} onSelect={onSelect} />
       ))}
     </div>
   )
@@ -77,7 +84,7 @@ function WikiTree({ selected, onSelect }) {
 function PageView({ path }) {
   const data = use(getPagePromise(path))
   return (
-    <div className="prose prose-sm max-w-none text-slate-700">
+    <div className="prose prose-sm max-w-none prose-cyber">
       <ReactMarkdown>{data.content ?? ''}</ReactMarkdown>
     </div>
   )
@@ -85,53 +92,59 @@ function PageView({ path }) {
 
 export default function WikiBrowser() {
   const [selected, setSelected] = useState(null)
-  const [view, setView] = useState('tree') // 'tree' | 'graph'
+  const [view, setView] = useState('tree')
 
   return (
-    <div className="flex flex-col gap-4 h-full">
+    <div className="flex flex-col gap-4">
       {/* View toggle */}
       <div className="flex gap-2">
-        {['tree', 'graph'].map(v => (
+        {[
+          { id: 'tree',  label: '◈ TREE' },
+          { id: 'graph', label: '⬡ GRAPH' },
+        ].map(({ id, label }) => (
           <button
-            key={v}
-            onClick={() => setView(v)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors capitalize
-              ${view === v
-                ? 'bg-indigo-600 text-white'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+            key={id}
+            onClick={() => setView(id)}
+            className={view === id ? 'btn-cyber' : 'btn-cyber-ghost'}
           >
-            {v === 'tree' ? '📁 Tree' : '🕸️ Graph'}
+            {label}
           </button>
         ))}
       </div>
 
       {view === 'tree' ? (
-        <div className="flex gap-6 flex-1 overflow-hidden">
-          {/* Tree */}
-          <div className="w-56 shrink-0 overflow-y-auto border-r border-slate-100 pr-2">
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">
-              Pages
-            </p>
-            <Suspense fallback={<p className="text-xs text-slate-400">Loading tree…</p>}>
+        <div className="flex gap-4 flex-1 overflow-hidden">
+          {/* File tree */}
+          <div className="w-52 shrink-0 overflow-y-auto cyber-card p-3"
+            style={{ background: '#080818' }}>
+            <p className="cyber-label mb-3">// PAGES</p>
+            <Suspense fallback={<p className="text-cyber-muted text-xs">loading…</p>}>
               <WikiTree selected={selected} onSelect={setSelected} />
             </Suspense>
           </div>
 
           {/* Page content */}
-          <div className="flex-1 overflow-y-auto">
-            {!selected && (
-              <p className="text-sm text-slate-400">Select a page to read it</p>
-            )}
-            {selected && (
-              <Suspense fallback={<p className="text-xs text-slate-400">Loading…</p>}>
+          <div className="flex-1 overflow-y-auto cyber-card p-5">
+            {!selected ? (
+              <div className="h-full flex flex-col items-center justify-center gap-3 text-cyber-muted">
+                <span className="text-4xl glow-cyan" style={{ opacity: 0.3 }}>◈</span>
+                <p className="cyber-label">SELECT A PAGE TO VIEW</p>
+              </div>
+            ) : (
+              <Suspense fallback={<p className="text-cyber-muted text-xs">// loading…</p>}>
                 <PageView path={selected} />
               </Suspense>
             )}
           </div>
         </div>
       ) : (
-        <div className="flex-1 overflow-hidden">
-          <Suspense fallback={<p className="text-xs text-slate-400">Loading graph…</p>}>
+        <div className="cyber-card" style={{
+          height: 'calc(100vh - 240px)',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+        }}>
+          <Suspense fallback={<p className="text-cyber-muted text-xs p-4">// loading graph…</p>}>
             <WikiGraph />
           </Suspense>
         </div>

@@ -1,12 +1,8 @@
-// Single message in the chat thread
-// Renders markdown, detects [[citations]], shows progress status
-
 import ReactMarkdown from 'react-markdown'
 import CitationLink from './CitationLink'
 import SaveToWikiButton from './SaveToWikiButton'
 
 function renderWithCitations(content, onOpenSource) {
-  // Split on [[page-name]] pattern
   const parts = content.split(/(\[\[.+?\]\])/g)
   return parts.map((part, i) => {
     const match = part.match(/^\[\[(.+?)\]\]$/)
@@ -26,9 +22,13 @@ export default function MessageBubble({ message, question, onOpenSource }) {
 
   if (isUser) {
     return (
-      <div className="flex justify-end">
-        <div className="max-w-[75%] rounded-2xl rounded-tr-sm px-4 py-2.5
-                        bg-indigo-600 text-white text-sm">
+      <div className="flex justify-end fade-in-up">
+        <div className="max-w-[78%] px-4 py-2.5 text-sm font-mono text-cyber-bg
+                        rounded rounded-tr-none"
+          style={{
+            background: 'linear-gradient(135deg, #00f5ff, #00c8d4)',
+            boxShadow: '0 0 12px #00f5ff66, 0 2px 12px rgba(0,0,0,0.4)',
+          }}>
           {message.content}
         </div>
       </div>
@@ -36,25 +36,25 @@ export default function MessageBubble({ message, question, onOpenSource }) {
   }
 
   return (
-    <div className="flex justify-start">
-      <div className="max-w-[85%] space-y-2">
-        {/* Progress indicator while streaming */}
+    <div className="flex justify-start fade-in-up">
+      <div className="max-w-[88%] space-y-2">
+        {/* Streaming progress */}
         {message.progress && !message.content && (
-          <p className="text-xs text-slate-400 italic px-1">{message.progress}</p>
+          <p className="text-[0.65rem] glow-cyan font-mono px-1 italic blink">
+            {message.progress}
+          </p>
         )}
 
         {/* Message content */}
         {message.content && (
-          <div className={`rounded-2xl rounded-tl-sm px-4 py-3 text-sm
-                          prose prose-sm max-w-none
-                          ${message.isError
-                            ? 'bg-red-50 text-red-700 border border-red-200'
-                            : 'bg-white border border-slate-200 text-slate-800'}`}>
+          <div className={`px-4 py-3 text-sm rounded rounded-tl-none
+                          prose prose-sm max-w-none prose-cyber
+                          ${message.isError ? 'cyber-card-red' : 'cyber-card'}`}>
             {renderWithCitations(message.content, onOpenSource)}
           </div>
         )}
 
-        {/* Save to wiki — only on completed messages */}
+        {/* Save to wiki */}
         {message.content && !message.isError && (
           <div className="px-1">
             <SaveToWikiButton message={message} question={question} />

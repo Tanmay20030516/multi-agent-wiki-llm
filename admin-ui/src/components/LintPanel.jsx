@@ -1,131 +1,117 @@
-// Trigger lint, show markdown report, confirm fix batch
-
 import ReactMarkdown from 'react-markdown'
 import { useLint } from '../hooks/useLint'
 
 export default function LintPanel() {
   const { status, report, result, error, runLint, confirmFixes, dismiss } = useLint()
-
   const busy = status === 'running' || status === 'confirming'
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-sm font-semibold text-slate-700 mb-1">Lint Wiki</h2>
-        <p className="text-xs text-slate-400">
-          The maintenance agent scans all wiki pages for issues and suggests
-          fixes. Review the report, then choose which fixes to apply.
-        </p>
-      </div>
+      <p className="text-cyber-muted text-xs leading-relaxed">
+        // the maintenance agent will scan all wiki pages, detect broken links,
+        orphaned nodes, schema violations and contradictions.
+      </p>
 
       <button
         onClick={runLint}
         disabled={busy}
-        className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700
-                   text-white text-sm font-medium transition-colors
-                   disabled:opacity-40 disabled:cursor-not-allowed"
+        className="btn-cyber"
+        style={busy ? {} : { animationName: 'neon-pulse', animationDuration: '2.5s', animationIterationCount: 'infinite' }}
       >
-        {status === 'running' ? 'Running lint…' : 'Run lint'}
+        {status === 'running' ? '// SCANNING…' : '⟳ EXECUTE LINT'}
       </button>
 
+      {/* Error */}
       {error && (
-        <p className="text-sm text-red-500">Error: {error}</p>
+        <div className="cyber-card-red p-3 text-xs glow-red font-mono fade-in-up">
+          ✗ FAULT :: {error}
+        </div>
       )}
 
-      {/* Lint report — shown after run completes */}
+      {/* Lint report */}
       {(status === 'done' || status === 'confirming') && report && (() => {
-        const hasErrors = report.includes('🔴')
+        const hasErrors   = report.includes('🔴')
         const hasWarnings = report.includes('🟡')
-        const hasIssues = hasErrors || hasWarnings
+        const hasIssues   = hasErrors || hasWarnings
         return (
-          <div className="space-y-4">
-            {/* Clean-wiki success banner */}
-            {!hasIssues && (
-              <div className="rounded-xl border border-green-200 bg-green-50 p-4 flex items-center gap-3">
-                <span className="text-2xl">✅</span>
+          <div className="space-y-4 fade-in-up">
+            {/* Health status banner */}
+            {!hasIssues ? (
+              <div className="cyber-card-green p-4 flex items-center gap-3">
+                <span className="text-2xl glow-green">✓</span>
                 <div>
-                  <p className="text-sm font-semibold text-green-800">Wiki is healthy — no issues found</p>
-                  <p className="text-xs text-green-600 mt-0.5">All pages passed the lint check.</p>
+                  <p className="text-cyber-green text-xs font-bold tracking-widest uppercase"
+                    style={{ textShadow: '0 0 6px #00ff88' }}>
+                    ALL SYSTEMS NOMINAL
+                  </p>
+                  <p className="text-xs text-cyber-muted mt-0.5">
+                    zero errors · zero warnings · wiki integrity verified
+                  </p>
                 </div>
+              </div>
+            ) : (
+              <div className="cyber-card p-3 flex items-center gap-3"
+                style={{ borderColor: 'rgba(255,170,0,0.3)' }}>
+                <span className="text-xl">⚠</span>
+                <p className="text-cyber-amber text-xs tracking-wide"
+                  style={{ textShadow: '0 0 6px #ffaa00' }}>
+                  {hasErrors ? 'CRITICAL ISSUES DETECTED' : 'WARNINGS DETECTED'}
+                </p>
               </div>
             )}
 
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">
-                Lint Report
-              </p>
-              <div className="prose prose-sm max-w-none text-slate-700">
+            {/* Report content */}
+            <div className="cyber-card p-5">
+              <p className="cyber-label mb-3">// LINT REPORT</p>
+              <div className="prose prose-sm max-w-none prose-cyber">
                 <ReactMarkdown>{report}</ReactMarkdown>
               </div>
             </div>
 
+            {/* Action buttons */}
             {hasIssues ? (
-              <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4 space-y-3">
-                <p className="text-sm font-medium text-indigo-800">
-                  Apply fixes? The agent will write the corrections to the wiki.
-                </p>
-                <div className="flex flex-wrap gap-2">
+              <div className="cyber-card-magenta p-4 space-y-3">
+                <p className="cyber-label glow-magenta">// SELECT REPAIR MODE</p>
+                <div className="flex flex-wrap gap-2 pt-1">
                   <button
                     onClick={() => confirmFixes('fix all issues')}
                     disabled={busy}
-                    className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700
-                               text-white text-sm font-medium transition-colors
-                               disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="btn-cyber-magenta"
                   >
-                    {status === 'confirming' ? 'Applying…' : 'Fix all'}
+                    {status === 'confirming' ? '// APPLYING…' : '⟳ FIX ALL'}
                   </button>
                   {hasErrors && (
                     <button
                       onClick={() => confirmFixes('fix errors only, ignore warnings')}
                       disabled={busy}
-                      className="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-600
-                                 text-white text-sm font-medium transition-colors
-                                 disabled:opacity-40 disabled:cursor-not-allowed"
+                      className="btn-cyber-amber"
                     >
-                      Fix errors only
+                      FIX ERRORS ONLY
                     </button>
                   )}
-                  <button
-                    onClick={dismiss}
-                    disabled={busy}
-                    className="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200
-                               text-slate-600 text-sm font-medium transition-colors
-                               disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    Dismiss
+                  <button onClick={dismiss} disabled={busy} className="btn-cyber-ghost">
+                    DISMISS
                   </button>
                 </div>
               </div>
             ) : (
-              <button
-                onClick={dismiss}
-                className="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200
-                           text-slate-600 text-sm font-medium transition-colors"
-              >
-                Done
+              <button onClick={dismiss} className="btn-cyber-ghost">
+                CLOSE REPORT
               </button>
             )}
           </div>
         )
       })()}
 
-      {/* Result after fixes applied */}
+      {/* Fix results */}
       {status === 'confirmed' && result && (
-        <div className="space-y-3">
-          <div className="rounded-xl border border-green-200 bg-green-50 p-4">
-            <p className="text-xs font-semibold text-green-700 uppercase tracking-wide mb-3">
-              ✓ Fixes applied
-            </p>
-            <div className="prose prose-sm max-w-none text-slate-700">
-              <ReactMarkdown>{result}</ReactMarkdown>
-            </div>
+        <div className="cyber-card-green p-4 space-y-3 fade-in-up">
+          <p className="cyber-label glow-green">// REPAIR COMPLETE</p>
+          <div className="prose prose-sm max-w-none prose-cyber mt-2">
+            <ReactMarkdown>{result}</ReactMarkdown>
           </div>
-          <button
-            onClick={dismiss}
-            className="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200
-                       text-slate-600 text-sm font-medium transition-colors"
-          >
-            Done
+          <button onClick={dismiss} className="btn-cyber-ghost mt-2">
+            CLOSE
           </button>
         </div>
       )}
