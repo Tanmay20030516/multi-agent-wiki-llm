@@ -2,8 +2,8 @@ import { useState, useRef, useEffect } from 'react'
 import { useChat } from '../hooks/useChat'
 import MessageBubble from './MessageBubble'
 
-export default function ChatWindow({ onOpenSource }) {
-  const { messages, loading, connected, sendMessage } = useChat()
+export default function ChatWindow({ onOpenSource, initialMessages, onMessagesChange }) {
+  const { messages, loading, connected, sendMessage } = useChat({ initialMessages, onMessagesChange })
   const [input, setInput] = useState('')
   const bottomRef = useRef(null)
 

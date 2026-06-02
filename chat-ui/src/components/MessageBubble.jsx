@@ -48,16 +48,16 @@ export default function MessageBubble({ message, question, onOpenSource }) {
         {/* Message content */}
         {message.content && (
           <div className={`px-4 py-3 text-sm rounded rounded-tl-none
-                          prose prose-sm max-w-none prose-cyber
+                          prose prose-sm max-w-none prose-cyber relative
                           ${message.isError ? 'cyber-card-red' : 'cyber-card'}`}>
             {renderWithCitations(message.content, onOpenSource)}
-          </div>
-        )}
 
-        {/* Save to wiki */}
-        {message.content && !message.isError && (
-          <div className="px-1">
-            <SaveToWikiButton message={message} question={question} />
+            {/* Save to wiki button — bottom-right of bubble */}
+            {!message.isError && (
+              <div className="flex justify-end mt-2 pt-1.5 border-t border-[#00f5ff0f]">
+                <SaveToWikiButton message={message} question={question} />
+              </div>
+            )}
           </div>
         )}
       </div>

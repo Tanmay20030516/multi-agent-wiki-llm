@@ -5,11 +5,20 @@ import { useWebSocket } from './useWebSocket'
 
 const WS_URL = `ws://${window.location.host}/ws/query`
 
-export function useChat() {
-  const [messages, setMessages] = useState([])
+export function useChat({ initialMessages = [], onMessagesChange } = {}) {
+  // initialMessages is the thread's saved history — only used on mount.
+  // Thread switching is handled by key={activeId} on ChatWindow (remounts fresh).
+  const [messages, setMessages] = useState(initialMessages)
   const [loading, setLoading] = useState(false)
-  const streamingRef = useRef(null) // id of the message currently being streamed
+  const streamingRef = useRef(null)
   const { lastEvent, connected, send } = useWebSocket(WS_URL)
+
+  // Persist messages to parent (useThreads → localStorage) after each update
+  const onMessagesChangeRef = useRef(onMessagesChange)
+  onMessagesChangeRef.current = onMessagesChange
+  useEffect(() => {
+    onMessagesChangeRef.current?.(messages)
+  }, [messages])
 
   // Handle incoming WebSocket events
   useEffect(() => {
@@ -18,13 +27,21 @@ export function useChat() {
     const { type, content, tool_name } = lastEvent
 
     if (type === 'llm_response') {
-      setMessages((prev) =>
-        prev.map((m) =>
-          m.id === streamingRef.current
-            ? { ...m, content: m.content + content }
-            : m
+      // Simulate typewriter by revealing the full content word-by-word
+      const msgId = streamingRef.current
+      const words = content.split(/(\s+)/) // split keeping whitespace
+      let i = 0
+      const tick = () => {
+        if (i >= words.length) return
+        const chunk = words[i++]
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === msgId ? { ...m, content: m.content + chunk } : m
+          )
         )
-      )
+        setTimeout(tick, 18) // ~18ms per word ≈ natural reading pace
+      }
+      tick()
     } else if (type === 'tool_call') {
       setMessages((prev) =>
         prev.map((m) =>
@@ -34,7 +51,7 @@ export function useChat() {
         )
       )
     } else if (type === 'tool_result') {
-      // tool result received, agent will continue
+      // no-op
     } else if (type === 'done') {
       setLoading(false)
       streamingRef.current = null
@@ -54,9 +71,7 @@ export function useChat() {
   function sendMessage(question) {
     if (!question.trim() || loading) return
 
-    // Add user message
     const userMsg = { id: crypto.randomUUID(), role: 'user', content: question }
-    // Add empty assistant message that will be streamed into
     const assistantMsg = {
       id: crypto.randomUUID(),
       role: 'assistant',
