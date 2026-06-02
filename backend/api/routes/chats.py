@@ -71,9 +71,8 @@ async def delete_thread(thread_id: str):
 
 @router.put("/{thread_id}/messages")
 async def replace_messages(thread_id: str, body: ReplaceMessagesRequest):
-    # Auto-create thread if it doesn't exist (handles race on first message)
-    thread = await chat_store.get_thread(thread_id)
-    if not thread:
-        await chat_store.create_thread(thread_id)
+    # create_thread uses INSERT OR IGNORE so it's safe to call unconditionally
+    # — no check-then-act race condition.
+    await chat_store.create_thread(thread_id)
     await chat_store.replace_messages(thread_id, body.messages)
     return {"ok": True}
