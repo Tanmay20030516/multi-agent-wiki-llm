@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import asyncio
 import sqlite3
+import threading
 import time
 from pathlib import Path
 from typing import Any
@@ -64,16 +65,17 @@ def _init_db(conn: sqlite3.Connection) -> None:
     conn.commit()
 
 
-# Module-level connection (re-used across requests in the same process)
-_conn: sqlite3.Connection | None = None
+# Per-thread connection pool via threading.local().
+# asyncio.to_thread dispatches to a thread-pool worker; each worker gets its
+# own sqlite3 connection so we never share a connection across threads.
+_local = threading.local()
 
 
 def get_conn() -> sqlite3.Connection:
-    global _conn
-    if _conn is None:
-        _conn = _connect()
-        _init_db(_conn)
-    return _conn
+    if not hasattr(_local, "conn") or _local.conn is None:
+        _local.conn = _connect()
+        _init_db(_local.conn)
+    return _local.conn
 
 
 # ── helpers ────────────────────────────────────────────────────────────────
@@ -100,11 +102,16 @@ def _list_threads() -> list[dict]:
 def _create_thread(thread_id: str, title: str = "New thread") -> dict:
     now = int(time.time() * 1000)
     conn = get_conn()
+    # INSERT OR IGNORE makes this idempotent — concurrent creates won't raise.
     conn.execute(
-        "INSERT INTO threads (id, title, created_at, updated_at) VALUES (?, ?, ?, ?)",
+        "INSERT OR IGNORE INTO threads (id, title, created_at, updated_at) VALUES (?, ?, ?, ?)",
         (thread_id, title, now, now),
     )
     conn.commit()
+    # Return current row (may have been created by a concurrent request)
+    row = conn.execute("SELECT * FROM threads WHERE id = ?", (thread_id,)).fetchone()
+    if row:
+        return {**_row_to_dict(row), "message_count": 0}
     return {"id": thread_id, "title": title, "created_at": now, "updated_at": now, "message_count": 0}
 
 
