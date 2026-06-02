@@ -2,12 +2,12 @@
 title: "Transformer"
 type: concept
 created: 2026-05-31
-updated: 2026-05-31
+updated: 2026-06-04
 source_count: 1
 also_known_as: []
 introduced_by: "vaswani-2017-attention"
 tags: ["architecture", "nlp", "deep-learning", "sequence-models"]
-related: ["vaswani-2017-attention", "radford-2018-improving", "attention-mechanism", "self-attention", "positional-embeddings-analysis"]
+related: ["vaswani-2017-attention", "radford-2018-improving", "attention-mechanism", "self-attention", "positional-embeddings-analysis", "positional-embeddings-mathematics", "gemini", "palm"]
 ---
 
 # Transformer

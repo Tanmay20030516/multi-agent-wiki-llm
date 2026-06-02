@@ -73,7 +73,7 @@ export default function App() {
             >
               {/* Active underline glow */}
               {active && (
-                <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-cyber-cyan"
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-cyber-cyan"
                   style={{ boxShadow: '0 0 8px #00f5ff, 0 0 16px #00f5ff88' }} />
               )}
               <span className="mr-1.5 opacity-60">{tab.glyph}</span>

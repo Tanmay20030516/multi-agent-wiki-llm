@@ -6,7 +6,7 @@ created: 2026-06-01
 updated: 2026-06-01
 source_count: 1
 tags: [organization, research, ai]
-related: ["gpt", "radford-2018-improving"]
+related: ["gpt", "radford-2018-improving", "rlhf"]
 ---
 
 # OpenAI

@@ -6,7 +6,7 @@ updated: 2026-06-01
 promoted_from: "explain me the use of positional embeddings?"
 sources_used: ["vaswani-2017-attention"]
 tags: [architecture, transformer, inference]
-related: ["transformer", "self-attention", "attention-mechanism", "vaswani-2017-attention"]
+related: ["transformer", "self-attention", "attention-mechanism", "vaswani-2017-attention", "positional-embeddings-mathematics", "rope", "alibi"]
 ---
 
 # The Role of Positional Embeddings in Transformers

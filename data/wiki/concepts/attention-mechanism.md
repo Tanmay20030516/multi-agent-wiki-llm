@@ -48,5 +48,5 @@ While attention concepts existed earlier, the self-attention mechanism as used i
 
 ## Sources
 
-- [[vaswani-2017-attention]] (Assumed to exist, will be created if not)
+- [[vaswani-2017-attention]]
 - [[devlin-2019-bert]]

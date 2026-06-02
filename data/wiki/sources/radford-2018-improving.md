@@ -11,7 +11,7 @@ venue: ""
 arxiv_id: ""
 url: ""
 tags: ["generative-pre-training", "language-modeling", "transformer", "fine-tuning", "nlp"]
-related: ["openai", "transformer", "language-modeling", "generative-pre-training", "discriminative-fine-tuning"]
+related: ["openai", "transformer", "language-modeling", "generative-pre-training", "discriminative-fine-tuning", "multinli", "race", "rte", "bookscorpus"]
 ---
 
 # Improving Language Understanding by Generative Pre-Training

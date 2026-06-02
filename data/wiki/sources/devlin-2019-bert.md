@@ -10,7 +10,7 @@ published: "2019"
 venue: "NAACL"
 arxiv_id: "1810.04805"
 tags: [pretraining, nlp, transformer, language-understanding, bidirectional]
-related: ["bert", "google", "transformer-encoder", "vaswani-2017-attention"]
+related: ["bert", "google", "transformer-encoder", "vaswani-2017-attention", "glue", "squad", "swag"]
 ---
 
 # BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding

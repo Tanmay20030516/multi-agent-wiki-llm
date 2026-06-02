@@ -45,6 +45,6 @@ Introduced in the paper "Attention Is All You Need" by Vaswani et al. (2017). BE
 
 ## Sources
 
-- [[vaswani-2017-attention]] (Assumed to exist, will be created if not)
+- [[vaswani-2017-attention]]
 - [[devlin-2019-bert]]
 - [[bert]]

@@ -11,7 +11,7 @@ venue: "NeurIPS"
 arxiv_id: "1706.03762"
 url: "https://arxiv.org/abs/1706.03762"
 tags: [architecture, transformer, attention, nlp]
-related: ["transformer", "attention-mechanism", "self-attention", "positional-embeddings-analysis"]
+related: ["transformer", "attention-mechanism", "self-attention", "positional-embeddings-analysis", "positional-embeddings-mathematics"]
 ---
 
 # Attention Is All You Need

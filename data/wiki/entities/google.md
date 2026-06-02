@@ -6,7 +6,7 @@ created: 2026-06-01
 updated: 2026-06-01
 source_count: 2
 tags: [organization, research, ai]
-related: ["bert", "vaswani-2017-attention"]
+related: ["bert", "vaswani-2017-attention", "palm", "gemini"]
 ---
 
 # Google
