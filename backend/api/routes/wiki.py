@@ -13,6 +13,7 @@ PUT  /api/wiki/schema      — Update schema.md (user-only, not agent)
 from __future__ import annotations
 
 import re as _re
+import pathlib as _pathlib
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
@@ -103,6 +104,16 @@ async def get_page(path: str) -> PageResponse:
         path = path + ".md"
 
     full_path = wm.wiki_root / path
+
+    # If the path doesn't exist as-is, search subdirectories for the slug
+    if not full_path.exists():
+        slug = _pathlib.Path(path).stem
+        for subdir in ("sources", "entities", "concepts", "analyses"):
+            candidate = wm.wiki_root / subdir / f"{slug}.md"
+            if candidate.exists():
+                full_path = candidate
+                path = f"{subdir}/{slug}.md"
+                break
 
     try:
         wm.assert_in_wiki(full_path)

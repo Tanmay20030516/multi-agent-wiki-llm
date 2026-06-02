@@ -19,7 +19,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from backend.api import websocket
 from backend.api.routes import wiki
-from backend.api.routes import ingest, lint, query, sources
+from backend.api.routes import ingest, lint, query, sources, chats
 from backend.core.config import settings
 from backend.core.wiki_manager import wm
 from backend.core.logger import get_logger
@@ -81,6 +81,7 @@ app.include_router(ingest.router)
 app.include_router(lint.router)
 app.include_router(wiki.router)
 app.include_router(sources.router)
+app.include_router(chats.router)
 
 
 # WebSocket endpoint — used by both UIs for streaming

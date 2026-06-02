@@ -6,11 +6,11 @@ import LogViewer from './components/LogViewer'
 import SchemaEditor from './components/SchemaEditor'
 
 const TABS = [
-  { id: 'ingest', label: 'INGEST',  glyph: '↓', component: IngestPanel },
-  { id: 'lint',   label: 'LINT',    glyph: '✦', component: LintPanel },
-  { id: 'wiki',   label: 'WIKI',    glyph: '◈', component: WikiBrowser },
-  { id: 'log',    label: 'LOG',     glyph: '◎', component: LogViewer },
-  { id: 'schema', label: 'SCHEMA',  glyph: '⚙', component: SchemaEditor },
+  { id: 'ingest', label: 'INGEST',  glyph: '⬇️', component: IngestPanel },
+  { id: 'lint',   label: 'LINT',    glyph: '🛠️', component: LintPanel },
+  { id: 'wiki',   label: 'WIKI',    glyph: '🧠', component: WikiBrowser },
+  { id: 'log',    label: 'LOG',     glyph: '🖥️', component: LogViewer },
+  { id: 'schema', label: 'SCHEMA',  glyph: '🗂️', component: SchemaEditor },
 ]
 
 export default function App() {
