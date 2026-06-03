@@ -3,7 +3,7 @@ agents/query_agent.py
 
 Wires the base agent loop with:
   - Read-only tool set (read_file, read_index, list_files, search_wiki)
-  - Groq client (Llama 3.3 70B — fast, cheap)
+  - Gemini client (gemini-2.5-flash-lite — fast, tool-use capable)
   - Query-specific system prompt
 
 The query agent answers user questions grounded in wiki content.
