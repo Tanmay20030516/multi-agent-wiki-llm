@@ -56,9 +56,18 @@ class GeminiClient:
     Instantiated once by router.py and reused across all maintenance operations.
     """
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        model: str | None = None,
+        default_temperature: float | None = None,
+    ) -> None:
         self._client = genai.Client(api_key=settings.gemini_api_key)
-        self._model = settings.maintenance_model
+        self._model = model or settings.maintenance_model
+        self._default_temperature = (
+            default_temperature
+            if default_temperature is not None
+            else settings.maintenance_temperature
+        )
         log.info("GeminiClient initialised — model: %s", self._model)
 
     async def chat(
@@ -71,9 +80,7 @@ class GeminiClient:
         Send messages to Gemini and return a normalised LLMResponse.
         Retries on rate-limit errors. Never raises — errors become LLMResponse.
         """
-        temp = (
-            temperature if temperature is not None else settings.maintenance_temperature
-        )
+        temp = temperature if temperature is not None else self._default_temperature
 
         # Extract system message (Gemini takes it separately from contents)
         system_instruction, contents = self._convert_messages(messages)

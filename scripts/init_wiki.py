@@ -17,7 +17,7 @@ Or from the project root:
 
 import sys
 import os
-import shutil
+# import shutil
 from pathlib import Path
 from datetime import date
  
@@ -41,7 +41,7 @@ if env_file.exists():
 else:
     print(f"✗ No .env found at {env_file}")
     print("  Copy backend/.env.example to backend/.env and fill in your values.")
-    print("  At minimum set: DATA_PATH, GEMINI_API_KEY, GROQ_API_KEY")
+    print("  At minimum set: DATA_PATH, GEMINI_API_KEY")
     sys.exit(1)
 
 

@@ -49,7 +49,6 @@ class Settings(BaseSettings):
 
     # LLM API Keys
     gemini_api_key: str = Field(..., description="Google AI Studio API key")
-    groq_api_key: str = Field(..., description="Groq API key")
 
     # Model Names
     maintenance_model: str = Field(
@@ -57,12 +56,8 @@ class Settings(BaseSettings):
         description="Model used by the maintenance agent (ingest, lint, promote)",
     )
     query_model: str = Field(
-        default="meta-llama/llama-4-scout-17b-16e-instruct",
-        description="Model used by the query agent (fast chat responses)",
-    )
-    query_model_fallback: str = Field(
-        default="llama-3.1-8b-instant",
-        description="Fallback query model if primary rate-limits or fails",
+        default="gemini-2.5-flash-lite",
+        description="Model used by the query agent (fast chat responses, must support tool use)",
     )
 
     # Data Paths
